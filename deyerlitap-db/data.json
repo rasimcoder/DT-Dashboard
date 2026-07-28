@@ -1,0 +1,73 @@
+[
+  {
+    "id": "DT-1784642354229",
+    "status": "active",
+    "satildigiTarix": null,
+    "mehsulTitle": "Maraqlı kitab paketi (Dostoyevski, Brian Tracy və s.)",
+    "mehsulAciqlamasi": "Məhsul: 4 Kitab Bir Paketdə\nQiymət: 25 AZN (Dəst halında)\nVəziyyəti: Yeni kimidir, çox səliqəli saxlanılıb.\nKitabxananızı zənginləşdirmək üçün seçilmiş, oxunmamış 4 möhtəşəm əsəri tək paketdə təqdim edirik. Həm şəxsi inkişaf, həm klassika, həm də detektiv sevənlər üçün əla fürsətdir.\nPaketə daxildir:\nFyodor Dostoyevski (2 Cild): \"Cinayət və Cəza\" və \"İdiot\". Dünya ədəbiyyatı klassikləri seriyasından.\nBrian Tracy - \"Milyon Dollarlıq Vərdişlər\": Gəlirlərinizi artırmaq üçün biznes bələdçisi.\nÇingiz Abdullayev - \"Qırılmış Əlaqə\": Maraqlı və həyəcan dolu detektiv əsəri.",
+    "mehsulQiymeti": "20",
+    "alisQiymeti": "0",
+    "mehsulunKateqoriyasi": "Kitablar",
+    "mehsulunVeziyyeti": "islenmis",
+    "labels": [
+      "kitab",
+      "kitablar",
+      "dostoyevski",
+      "çingiz abdullayev",
+      "motivasiya",
+      "şəxsi inkişaf",
+      ""
+    ],
+    "mehsulResmleri": [
+      "1784642449983-WhatsApp_Image_2026-07-07_at_11.07.33.jpeg",
+      "1784642450084-WhatsApp_Image_2026-07-07_at_11.07.34_(1).jpeg",
+      "1784642450209-WhatsApp_Image_2026-07-07_at_11.07.34_(2).jpeg",
+      "1784642450319-WhatsApp_Image_2026-07-07_at_11.07.34_(4).jpeg",
+      "1784642450428-WhatsApp_Image_2026-07-07_at_11.07.34_(5).jpeg",
+      "1784642450553-WhatsApp_Image_2026-07-07_at_11.07.34_(6).jpeg",
+      "1784642450662-WhatsApp_Image_2026-06-28_at_09.15.01.jpeg",
+      "1784642450772-WhatsApp_Image_2026-07-04_at_20.02.50.jpeg",
+      "1784642450892-WhatsApp_Image_2026-07-04_at_20.02.52.jpeg",
+      "1784642450990-WhatsApp_Image_2026-07-04_at_20.02.53_(1).jpeg"
+    ],
+    "mehsulunYaradilmTarixi": "7/21/2026, 5:59:14 PM",
+    "kohneQiymet": "25",
+    "satildigiYer": null,
+    "mehsulXercleri": [
+      {
+        "title": "yol pulu",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "id": "DT-1784642801301",
+    "status": "sold",
+    "satildigiTarix": "2026-07-24T23:21:54.942Z",
+    "mehsulTitle": "HP Pavilion G6 ve G4 notebook ehtiyat hisseleri",
+    "mehsulAciqlamasi": "Məhsul: Notebook və PC hissələri (Dəst)\nModellər: HP Pavilion G6, G4, G62, CQ42\nQiymət: 30 AZN (Hamısı birlikdə)\nDəstə daxil olan hissələr:\n4GB DDR3 RAM (ADATA) - PC3-10600\n2GB DDR3 RAM (Hynix) - PC3-10600\nOrijinal Batareya (CQ42) - HP G6, G62 üçün\nKlaviatura (HP G6) - Tam işlək\n2GB DDR3 Masaüstü RAM (TwinMOS)\nVəziyyəti: Tam işlək və səliqəli vəziyyətdədir.",
+    "mehsulQiymeti": "20",
+    "alisQiymeti": "0",
+    "mehsulunKateqoriyasi": "Elektronika",
+    "mehsulunVeziyyeti": "islenmis",
+    "labels": [
+      "elektronika",
+      "notebook hisseleri",
+      "aksesuarlar",
+      "hp",
+      "hp batareyasi"
+    ],
+    "mehsulResmleri": [
+      "1784642801183-WhatsApp_Image_2026-07-05_at_10.08.30.jpeg"
+    ],
+    "mehsulunYaradilmTarixi": "7/21/2026, 6:06:41 PM",
+    "kohneQiymet": "15",
+    "satildigiYer": "Digər",
+    "mehsulXercleri": [
+      {
+        "title": "yol pulu",
+        "amount": 5
+      }
+    ]
+  }
+]

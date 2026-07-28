@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="az">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeyerliTap | Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>Deyerli<span>Tap</span> Baza</h2>
+            </div>
+            <nav>
+                <ul>
+
+                    <li class="nav-item active" onclick="showSection('home')">
+                        <i class="fas fa-home"></i> Bütün Məhsullar
+                    </li>
+                    <li class="nav-item" onclick="toggleCategories()">
+                        <i class="fas fa-tags"></i> Kateqoriyalar <i class="fas fa-chevron-down arrow"
+                            id="catArrow"></i>
+                    </li>
+                    <ul class="sub-menu" id="categoryMenu">
+                        <li onclick="filterByCategory('Elektronika')">Elektronika</li>
+                        <li onclick="filterByCategory('Mebel')">Mebel</li>
+                        <li onclick="filterByCategory('Ev')">Ev</li>
+                        <li onclick="filterByCategory('Təmir Tikinti')">Təmir Tikinti</li>
+                        <li onclick="filterByCategory('Nəqliyyat')">Nəqliyyat</li>
+                        <li onclick="filterByCategory('Şəxsi əşyalar')">Şəxsi əşyalar</li>
+                        <li onclick="filterByCategory('Kitablar')">Kitablar</li>
+                        <li onclick="filterByCategory('Uşaqlar üçün')">Uşaqlar üçün</li>
+                        <li onclick="filterByCategory('Antikivar')">Antikivar</li>
+                        <li onclick="filterByCategory('Digər')">Digər</li>
+                    </ul>
+                    <!-- Sidebar-dakı nav ul daxilinə yapışdır -->
+                    <li class="nav-item" onclick="filterByStatus('sold')">
+                        <i class="fas fa-check-double"></i> Satılanlar
+                    </li>
+
+                    <li class="nav-item" onclick="showSection('analytics')">
+                        <i class="fas fa-chart-line"></i> Analitika
+                    </li>
+
+
+                    <li class="nav-item" id="nav-wishlist" onclick="showSection('wishlist')">
+                        <i class="fas fa-clipboard-list"></i> Gözləmə Siyahısı
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="connectBtn" class="btn-connect">
+                    <i class="fas fa-database"></i> Bazaya Qoşul
+                </button>
+                <p id="dbStatus" style="font-size: 11px; margin-top: 5px; color: #f39c12;">Baza qoşulmayıb</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Axtar...">
+                </div>
+                <button class="btn-add" onclick="openNewProductModal()"><i class="fas fa-plus"></i> Yeni Elan</button>
+            </header>
+
+            <div id="productGrid" class="product-grid">
+                <!-- Məhsullar buraya gələcək -->
+                <div class="welcome-msg">Zəhmət olmasa, işə başlamaq üçün "Bazaya Qoşul" düyməsini sıxın.</div>
+            </div>
+
+            <!-- Detallı Baxış Bölməsi (İlkin olaraq gizlidir) -->
+            <section id="productDetailView" class="detail-view" style="display:none;">
+                <div class="detail-header">
+                    <button class="btn-back" onclick="hideProductDetail()"><i class="fas fa-arrow-left"></i> Geri
+                        qayıt</button>
+                    <div class="detail-actions">
+                        <button id="editFromDetail" class="btn-edit-tool"><i class="fas fa-edit"></i> Düzəliş
+                            et</button>
+                    </div>
+                </div>
+
+                <div class="detail-container">
+                    <!-- Şəkillər yan-yana və scroll olan hissə -->
+                    <div class="detail-gallery" id="detailGallery"></div>
+
+                    <div class="detail-content">
+                        <h1 id="detailTitle">Məhsul Adı</h1>
+                        <div class="detail-price-box">
+                            <span id="detailPrice" class="price-current">0 ₼</span>
+                            <span id="detailOldPrice" class="price-old"></span>
+                        </div>
+
+                        <div class="detail-meta">
+                            <p><strong>Kateqoriya:</strong> <span id="detailCategory"></span></p>
+                            <p><strong>Vəziyyəti:</strong> <span id="detailCondition"></span></p>
+                            <p><strong>Alış Qiyməti:</strong> <span id="detailCost"></span> ₼</p>
+                        </div>
+
+                        <div class="detail-labels" id="detailLabels"></div>
+
+                        <div class="detail-description">
+                            <h3>Məhsul haqqında məlumat:</h3>
+                            <p id="detailDescText"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- index.html <main> daxilinə -->
+            <section id="analyticsSection" class="analytics-view" style="display:none;">
+                <div class="analytics-header">
+                    <h2><i class="fas fa-chart-pie"></i> Biznes Analitikası</h2>
+                    <!-- index.html içindəki analytics-header daxilinə -->
+                    <div class="analytics-controls">
+                        <select id="filterYear" onchange="updateAnalytics()">
+                            <option value="all">Bütün İllər</option>
+                        </select>
+                        <select id="filterMonth" onchange="updateAnalytics()">
+                            <option value="all">Bütün Aylar</option>
+                            <option value="0">Yanvar</option>
+                            <option value="1">Fevral</option>
+                            <option value="2">Mart</option>
+                            <option value="3">Aprel</option>
+                            <option value="4">May</option>
+                            <option value="5">İyun</option>
+                            <option value="6">İyul</option>
+                            <option value="7">Avqust</option>
+                            <option value="8">Sentyabr</option>
+                            <option value="9">Oktyabr</option>
+                            <option value="10">Noyabr</option>
+                            <option value="11">Dekabr</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Üst Stats Kartları -->
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e1f0fa; color: #3498db;"><i
+                                class="fas fa-wallet"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Ümumi Satış (Dövriyyə)</span>
+                            <h3 id="statTotalRevenue">0 ₼</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e8f5e9; color: #2ecc71;"><i
+                                class="fas fa-hand-holding-usd"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Xalis Mənfəət</span>
+                            <h3 id="statNetProfit">0 ₼</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #fff3e0; color: #f39c12;"><i
+                                class="fas fa-box-open"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Anbar Dəyəri (Maya)</span>
+                            <h3 id="statStockValue">0 ₼</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #f8d7da; color: #721c24;"><i class="fas fa-tools"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Ümumi Əlavə Xərclər</span>
+                            <h3 id="statTotalExpenses">0 ₼</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #fce4ec; color: #e91e63;"><i
+                                class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Satılmış Məhsul</span>
+                            <h3 id="statSoldQuantity">0 ədəd</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #f3e5f5; color: #8e24aa;"><i
+                                class="fas fa-hourglass-half"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Ortalama Satış Sürəti</span>
+                            <h3 id="statAvgSaleTime">0 gün</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Qrafiklər -->
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <canvas id="profitChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="platformChart"></canvas> <!-- Bu Platforma üçün (YENİ) -->
+                    </div>
+                </div>
+                <!-- charts-row 2 -->
+                <div class="charts-row second-row">
+                    <div class="chart-container full-width">
+                        <canvas id="conditionChart"></canvas> <!-- Yeni vs İşlənmiş -->
+                    </div>
+                </div>
+
+                <!-- Sənin verdiyin conditionChart div-indən dərhal sonra yapışdır -->
+                <div class="charts-row"
+                    style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Xərc Paylanması Qrafiki -->
+                    <div class="chart-container">
+                        <canvas id="expenseDistributionChart"></canvas>
+                    </div>
+
+                    <!-- Xərc Detalları Siyahısı -->
+                    <div class="recent-sales" style="margin-top: 0;">
+                        <h3><i class="fas fa-receipt"></i> Xərc Detalları (Gruplaşdırılmış)</h3>
+                        <div id="expenseBreakdownList" style="max-height: 300px; overflow-y: auto; padding: 10px;">
+                            <!-- JS tərəfindən dinamik dolacaq -->
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Son Satışlar Cədvəli -->
+                <div class="recent-sales">
+                    <h3>Son Satışlar</h3>
+                    <table id="salesTable">
+                        <thead>
+                            <tr>
+                                <th>Məhsul</th>
+                                <th>Tarix</th>
+                                <th>Alış</th>
+                                <th>Satış</th>
+                                <th>Qazanc</th>
+                                <th>Sürət</th> <!-- YENİ SÜTUN -->
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody">
+                            <!-- JS ilə dolacaq -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="wishlistSection" class="content-section" style="display:none;">
+                <div class="analytics-header">
+
+                    <h2><i class="fas fa-users"></i> Müştəri Gözləmə Siyahısı</h2>
+
+                    <button class="btn-add" onclick="openWishlistModal()"><i class="fas fa-user-plus"></i> Yeni
+                        İstək</button>
+
+
+                </div>
+
+                <div class="recent-sales">
+                    <table id="wishlistTable">
+                        <thead>
+                            <tr>
+                                <th>Müştəri</th>
+                                <th>Nə Axtarır?</th>
+                                <th>Büdcə</th>
+                                <th>Əlaqə</th>
+                                <th>Status</th>
+                                <th>Əməliyyat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wishlistBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Wishlist Əlavə Etmə Modalı -->
+            <div id="wishlistModal" class="modal">
+                <div class="modal-content" style="width: 400px;">
+                    <span class="close" onclick="closeWishlistModal()">&times;</span>
+                    <h2 style="border:none; padding-bottom:10px;">Yeni İstək Əlavə Et</h2>
+                    <form id="wishlistForm">
+                        <div style="padding: 20px;">
+                            <input type="text" id="wishCustomer" placeholder="Müştəri adı" required>
+                            <input type="text" id="wishProduct" placeholder="Məhsul (məs: iPhone 12)" required>
+                            <input type="number" id="wishBudget" placeholder="Büdcə (₼)">
+                            <input type="text" id="wishPhone" placeholder="Əlaqə nömrəsi" required>
+                            <textarea id="wishNote" placeholder="Əlavə qeydlər..." rows="3"></textarea>
+                            <button type="submit" class="btn-save"
+                                style="margin: 20px 0 0 0; border-radius: 8px;">Siyahıya Əlavə Et</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: Məhsul Əlavə Et -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Yeni Məhsul</h2>
+            <form id="productForm">
+                <!-- Bunu modal içindəki formun daxilinə yapışdır -->
+                <input type="hidden" id="editProductId">
+                <div class="form-scroll">
+                    <input type="text" id="title" placeholder="Məhsul başlığı" required>
+                    <textarea id="description" placeholder="Ətraflı məlumat (açıqlama)" rows="3"></textarea>
+
+                    <!-- Xərclər bölməsi -->
+                    <div class="expense-section">
+                        <div class="expense-header">
+                            <h4><i class="fas fa-coins"></i> Əlavə Xərclər</h4>
+                            <button type="button" class="btn-add-expense" onclick="addExpenseRow()">
+                                <i class="fas fa-plus"></i> Əlavə et
+                            </button>
+                        </div>
+                        <div id="expenseContainer">
+                            <!-- Xərc sətirləri bura gələcək -->
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label>Alış Qiyməti (₼)</label>
+                            <input type="number" id="costPrice" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Satış Qiyməti (₼)</label>
+                            <input type="number" id="salePrice" required>
+                        </div>
+                    </div>
+
+
+                    <div class="row">
+                        <select id="category">
+                            <option value="Elektronika">Elektronika</option>
+                            <option value="Mebel">Mebel</option>
+                            <option value="Ev">Ev</option>
+                            <option value="Təmir Tikinti">Təmir Tikinti</option>
+                            <option value="Nəqliyyat">Nəqliyyat</option>
+                            <option value="Şəxsi əşyalar">Şəxsi əşyalar</option>
+                            <option value="Kitablar">Kitablar</option>
+                            <option value="Uşaqlar üçün">Uşaqlar üçün</option>
+                            <option value="Antikivar">Antikivar</option>
+                            <option value="Digər">Digər</option>
+                        </select>
+                        <select id="condition">
+                            <option value="yeni">Yeni</option>
+                            <option value="islenmis">İşlənmiş</option>
+                        </select>
+                    </div>
+
+                    <input type="text" id="labels" placeholder="Etiketlər (vergüllə ayır: telefon, qara, ucuz)">
+
+                    <!-- Drag & Drop Area -->
+                    <div id="dropZone" class="drop-zone">
+                        <i class="fas fa-images"></i>
+                        <p>Şəkilləri bura atın və ya klikləyin</p>
+                        <input type="file" id="fileInput" multiple accept="image/*" hidden>
+                    </div>
+                    <div id="imagePreview" class="image-preview"></div>
+                </div>
+                <button type="submit" class="btn-save">Yadda Saxla</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Platforma Seçimi Modalı -->
+    <div id="platformModal" class="modal">
+        <div class="modal-content platform-selector">
+            <span class="close" onclick="closePlatformModal()">&times;</span>
+            <h3><i class="fas fa-shopping-basket"></i> Harada satıldı?</h3>
+            <p>Satış kanalını seçin:</p>
+            <div class="platform-buttons">
+                <button class="p-btn inst" onclick="confirmSaleWithPlatform('Instagram')"><i
+                        class="fab fa-instagram"></i> Instagram</button>
+                <button class="p-btn face" onclick="confirmSaleWithPlatform('Facebook')"><i class="fab fa-facebook"></i>
+                    Facebook</button>
+                <button class="p-btn tap" onclick="confirmSaleWithPlatform('Tap.az')"><i class="fas fa-search-plus"></i>
+                    Tap.az</button>
+                <button class="p-btn lala" onclick="confirmSaleWithPlatform('Lalafo')"><i
+                        class="fas fa-hand-holding-heart"></i> Lalafo</button>
+                <button class="p-btn other" onclick="confirmSaleWithPlatform('Digər')"><i class="fas fa-ellipsis-h"></i>
+                    Digər</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
