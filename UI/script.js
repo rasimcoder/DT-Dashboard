@@ -140,8 +140,8 @@ async function getImgSrc(fileName) {
     }
 }
 
-// 6. FORM TƏQDİM EDİLDİKDƏ (YENİ MƏHSUL VƏ YA REDAKTƏ)
-// 6. FORM TƏQDİM EDİLDİKDƏ (YENİ MƏHSUL VƏ YA REDAKTƏ)
+
+// 6. FORM TƏQDİM EDİLDİKDƏ (YENİ MƏHSUL VƏ YA REDAKTƏ) - YENİLƏNDİ
 document.getElementById('productForm').onsubmit = async (e) => {
     e.preventDefault();
 
@@ -156,19 +156,36 @@ document.getElementById('productForm').onsubmit = async (e) => {
 
     try {
         const editId = document.getElementById('editProductId').value;
-        const currentTitle = document.getElementById('title').value; // Bildiriş üçün başlığı götürürük
-        const newPrice = document.getElementById('salePrice').value;
+        const currentTitle = document.getElementById('title').value; 
+        const newPrice = Number(document.getElementById('salePrice').value) || 0;
+
+        // --- BİZNES MODELİ HESABLAMASI (3-CÜ ADDIM) ---
+        const model = document.querySelector('input[name="biznesModeli"]:checked')?.value || 'own';
+        let alisPrice = Number(document.getElementById('costPrice').value) || 0;
+        let commProfit = 0;
+        let owner = "";
+
+        if (model === 'commission') {
+            commProfit = Number(document.getElementById('commissionProfit').value) || 0;
+            owner = document.getElementById('ownerName').value;
+            // Senior Məntiqi: Əgər vasitəçiyəmsə, Alış Qiyməti = Satış - Mənim Qazancım
+            alisPrice = newPrice - commProfit;
+        }
+        // ----------------------------------------------
 
         // 1. Şəkilləri yüklə
         const newUploadedPhotoNames = await saveImagesLocally(selectedFiles);
         const finalPhotoList = [...(currentExistingPhotos || []), ...newUploadedPhotoNames];
 
-        // 2. Məlumat obyektini yaradırıq (Burada bütün sahələr dəqiq qeyd olunub)
+        // 2. Məlumat obyektini yaradırıq (YENİ SAHƏLƏR ƏLAVƏ EDİLDİ)
         const productInfo = {
             mehsulTitle: currentTitle,
             mehsulAciqlamasi: document.getElementById('description').value,
             mehsulQiymeti: newPrice,
-            alisQiymeti: document.getElementById('costPrice').value,
+            alisQiymeti: alisPrice, // Hesablanmış qiymət bura gedir
+            biznesModeli: model,    // 'own' və ya 'commission'
+            komissiyaQazanci: commProfit,
+            malSahibi: owner,
             mehsulunKateqoriyasi: document.getElementById('category').value,
             mehsulunVeziyyeti: document.getElementById('condition').value,
             labels: document.getElementById('labels').value.split(',').map(l => l.trim()),
@@ -208,7 +225,7 @@ document.getElementById('productForm').onsubmit = async (e) => {
         // 3. Bazaya yazırıq
         await saveData();
 
-        // 4. BİLDİRİŞ YOXLAMA (Yalnız yeni məhsul əlavə edəndə və ya adı dəyişəndə)
+        // 4. BİLDİRİŞ YOXLAMA
         if (typeof checkWishlistMatch === 'function') {
             checkWishlistMatch(currentTitle);
         }
@@ -219,6 +236,12 @@ document.getElementById('productForm').onsubmit = async (e) => {
         const expContainer = document.getElementById('expenseContainer');
         if (expContainer) expContainer.innerHTML = '';
         
+        // Komissiya sahələrini də təmizləyək və gizlədək
+        if(typeof toggleBiznesModel === 'function') {
+            document.querySelector('input[value="own"]').checked = true;
+            toggleBiznesModel(); 
+        }
+
         selectedFiles = [];
         currentExistingPhotos = [];
         closeModal();
@@ -654,7 +677,7 @@ function populateYearFilter() {
     });
 }
 
-// 2. Yenilənmiş Əsas Analitika Funksiyası (Əlavə Xərclər və Yeni/İşlənmiş Analizi ilə)
+// 2. Yenilənmiş Əsas Analitika Funksiyası (Komissiya və Satan məlumatı ilə)
 async function updateAnalytics() {
     if (!products || products.length === 0) return;
 
@@ -663,6 +686,7 @@ async function updateAnalytics() {
 
     let filteredSold = products.filter(p => p.status === 'sold');
 
+    // Filtrləri tətbiq edirik
     if (selectedYear !== 'all') {
         filteredSold = filteredSold.filter(p => new Date(p.satildigiTarix).getFullYear().toString() === selectedYear);
     }
@@ -670,76 +694,85 @@ async function updateAnalytics() {
         filteredSold = filteredSold.filter(p => new Date(p.satildigiTarix).getMonth().toString() === selectedMonth);
     }
 
-    // --- HESABLAMA HİSSƏSİ ---
-    let totalRevenue = 0;
-    let totalCostOfSold = 0;
-    let totalExtraExpenses = 0;
+    // --- HESABLAMA DƏYİŞƏNLƏRİ ---
+    let realRevenue = 0;      
+    let ownProductsProfit = 0; 
+    let commProfitSum = 0;    
+    let totalExtraExpenses = 0; 
     let totalSaleDays = 0;
-    const expenseGroups = {}; // Xərcləri qruplaşdırmaq üçün obyekt
+    const expenseGroups = {}; 
 
     filteredSold.forEach(p => {
         const salePrice = Number(p.mehsulQiymeti) || 0;
         const baseCost = Number(p.alisQiymeti) || 0;
-        
-        // Məhsulun xərclərini dövrə salırıq
-        let itemTotalExtras = 0;
-        (p.mehsulXercleri || []).forEach(ex => {
-            const amt = Number(ex.amount) || 0;
-            itemTotalExtras += amt;
-            totalExtraExpenses += amt;
+        const itemExpenses = (p.mehsulXercleri || []).reduce((sum, ex) => sum + (Number(ex.amount) || 0), 0);
+        totalExtraExpenses += itemExpenses;
 
-            // Qruplaşdırma məntiqi (böyük-kiçik hərf fərqini silirik)
+        // Xərcləri qruplaşdırırıq
+        (p.mehsulXercleri || []).forEach(ex => {
             const key = ex.title.trim().toLowerCase();
-            if (!expenseGroups[key]) {
-                expenseGroups[key] = { name: ex.title.trim(), total: 0 };
-            }
-            expenseGroups[key].total += amt;
+            if (!expenseGroups[key]) expenseGroups[key] = { name: ex.title.trim(), total: 0 };
+            expenseGroups[key].total += Number(ex.amount);
         });
 
-        totalRevenue += salePrice;
-        totalCostOfSold += (baseCost + itemTotalExtras);
+        // --- MODELƏ GÖRƏ AYIRMA ---
+        if (p.biznesModeli === 'commission') {
+            const kProfit = Number(p.komissiyaQazanci) || 0;
+            commProfitSum += kProfit;
+            realRevenue += kProfit; 
+        } else {
+            const itemProfit = salePrice - (baseCost + itemExpenses);
+            ownProductsProfit += itemProfit;
+            realRevenue += salePrice; 
+        }
 
-        const entryDate = new Date(p.mehsulunYaradilmTarixi);
-        const saleDate = new Date(p.satildigiTarix);
-        const diffDays = Math.ceil(Math.abs(saleDate - entryDate) / (1000 * 60 * 60 * 24)) || 1;
-        totalSaleDays += diffDays;
+        // Satış sürəti hesabı
+        const diff = Math.ceil(Math.abs(new Date(p.satildigiTarix) - new Date(p.mehsulunYaradilmTarixi)) / (1000 * 60 * 60 * 24)) || 1;
+        totalSaleDays += diff;
     });
 
-    const netProfit = totalRevenue - totalCostOfSold;
+    const finalNetProfit = ownProductsProfit + commProfitSum;
     const avgSaleTime = filteredSold.length > 0 ? Math.round(totalSaleDays / filteredSold.length) : 0;
-    const stockValue = products.filter(p => p.status !== 'sold').reduce((sum, p) => sum + (Number(p.alisQiymeti) || 0), 0);
+    
+    const stockValue = products
+        .filter(p => p.status !== 'sold' && p.biznesModeli !== 'commission')
+        .reduce((sum, p) => sum + (Number(p.alisQiymeti) || 0), 0);
 
-    // --- EKRANA ÇIXARIŞ (Stats) ---
+    // --- EKRANA ÇIXARIŞ ---
     const setElText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
-    setElText('statTotalRevenue', totalRevenue.toLocaleString() + " ₼");
-    setElText('statNetProfit', netProfit.toLocaleString() + " ₼");
-    setElText('statStockValue', stockValue.toLocaleString() + " ₼");
+
+    setElText('statFinalProfit', finalNetProfit.toLocaleString() + " ₼");
+    setElText('statOwnProfit', ownProductsProfit.toLocaleString() + " ₼");
+    setElText('statCommProfit', commProfitSum.toLocaleString() + " ₼");
+    setElText('statTotalRevenue', realRevenue.toLocaleString() + " ₼");
     setElText('statTotalExpenses', totalExtraExpenses.toLocaleString() + " ₼");
+    setElText('statStockValue', stockValue.toLocaleString() + " ₼");
     setElText('statSoldQuantity', filteredSold.length + " ədəd");
     setElText('statAvgSaleTime', avgSaleTime + " gün");
 
-    // --- XƏRC DETALLARI SİYAHISINI DOLDURMAQ ---
+    // Xərc siyahısını doldurmaq
     const expListDiv = document.getElementById('expenseBreakdownList');
     if(expListDiv) {
-        const sortedExpenses = Object.values(expenseGroups).sort((a,b) => b.total - a.total);
-        expListDiv.innerHTML = sortedExpenses.length > 0 
-            ? sortedExpenses.map(ex => `
-                <div class="expense-breakdown-item">
-                    <span class="exp-name">${ex.name}</span>
-                    <span class="exp-total">${ex.total.toLocaleString()} ₼</span>
-                </div>`).join('')
-            : '<p style="color:#999; text-align:center;">Heç bir əlavə xərc yoxdur.</p>';
+        expListDiv.innerHTML = Object.values(expenseGroups).sort((a,b) => b.total - a.total).map(ex => `
+            <div class="expense-breakdown-item">
+                <span class="exp-name">${ex.name}</span>
+                <span class="exp-total">${ex.total.toLocaleString()} ₼</span>
+            </div>`).join('') || '<p style="color:#999; text-align:center;">Xərc yoxdur.</p>';
     }
 
-    // --- CƏDVƏLİ DOLDURMAQ ---
+    // --- CƏDVƏLİ DOLDURMAQ (3-cü Addım: Satan sütunu ilə) ---
     const tableBody = document.getElementById('salesTableBody');
     if (tableBody) {
         tableBody.innerHTML = '';
-        const sortedItems = [...filteredSold].sort((a, b) => new Date(b.satildigiTarix) - new Date(a.satildigiTarix));
-        sortedItems.slice(0, 20).forEach(p => {
-            const alis = Number(p.alisQiymeti) || 0;
-            const itemXerc = (p.mehsulXercleri || []).reduce((s, e) => s + (Number(e.amount) || 0), 0);
-            const qazanc = Number(p.mehsulQiymeti) - (alis + itemXerc);
+        [...filteredSold].sort((a, b) => new Date(b.satildigiTarix) - new Date(a.satildigiTarix)).slice(0, 20).forEach(p => {
+            const isComm = p.biznesModeli === 'commission';
+            
+            // Qazancın hesablanması
+            const profit = isComm 
+                ? (Number(p.komissiyaQazanci) || 0) 
+                : (Number(p.mehsulQiymeti) - (Number(p.alisQiymeti) + (p.mehsulXercleri || []).reduce((s, e) => s + Number(e.amount), 0)));
+            
+            // Sürət hesabı
             const entryDate = new Date(p.mehsulunYaradilmTarixi);
             const saleDate = new Date(p.satildigiTarix);
             const days = Math.ceil(Math.abs(saleDate - entryDate) / (1000 * 60 * 60 * 24)) || 1;
@@ -747,17 +780,22 @@ async function updateAnalytics() {
 
             tableBody.innerHTML += `
                 <tr>
-                    <td>${p.mehsulTitle}</td>
+                    <td>
+                        <strong>${p.mehsulTitle}</strong>
+                        ${isComm ? '<br><small style="color:#3498db; font-size:10px;"><i class="fas fa-handshake"></i> Vasitəçilik</small>' : ''}
+                    </td>
+                    <td style="font-size: 13px; color: #2c3e50;">
+                        ${p.malSahibi ? `<i class="fas fa-user-tag" style="font-size: 10px; color:#999"></i> ${p.malSahibi}` : '-'}
+                    </td>
                     <td>${new Date(p.satildigiTarix).toLocaleDateString('az-AZ')}</td>
-                    <td>${alis} ₼</td>
+                    <td>${isComm ? '-' : p.alisQiymeti + ' ₼'}</td>
                     <td>${p.mehsulQiymeti} ₼</td>
-                    <td class="profit-text">+${qazanc.toLocaleString()} ₼</td>
+                    <td class="profit-text">+${profit.toLocaleString()} ₼</td>
                     <td class="${speedClass}">${days} gün</td>
                 </tr>`;
         });
     }
 
-    // Qrafikləri yeniləyirik (expenseGroups artıq hazırdır!)
     initCharts(filteredSold, expenseGroups);
 }
 
@@ -1161,4 +1199,21 @@ else if (currentActiveSection === 'home') {
     );
     renderProducts(filtered);
 }
+}
+
+
+// script.js sonuna yapışdır
+function toggleBiznesModel() {
+    const model = document.querySelector('input[name="biznesModeli"]:checked').value;
+    const commFields = document.getElementById('commissionFields');
+    const costInputGroup = document.getElementById('costPrice').parentElement;
+
+    if (model === 'commission') {
+        commFields.style.display = 'block';
+        costInputGroup.style.display = 'none'; // Alış qiymətini gizlədirik
+        document.getElementById('costPrice').value = 0; // Sıfırlayırıq
+    } else {
+        commFields.style.display = 'none';
+        costInputGroup.style.display = 'block'; // Alış qiymətini geri gətiririk
+    }
 }

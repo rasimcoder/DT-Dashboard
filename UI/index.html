@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeyerliTap | Admin Dashboard</title>
+    <title>D-T | Admin Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -145,58 +145,94 @@
                 </div>
 
                 <!-- Üst Stats Kartları -->
-                <div class="stats-grid">
+  
+<!-- 1. ANALİTİKA KARTLARI (Iconlar əlavə olundu) -->
+<div class="stats-grid">
+    <div class="stat-card" style="border-top: 3px solid #2ecc71;">
+        <div class="stat-icon" style="background: #e8f5e9; color: #2ecc71;"><i class="fas fa-hand-holding-dollar"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Yekun Mənfəət</span>
+            <h3 id="statFinalProfit">0 ₼</h3>
+        </div>
+    </div>
 
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #e1f0fa; color: #3498db;"><i
-                                class="fas fa-wallet"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Ümumi Satış (Dövriyyə)</span>
-                            <h3 id="statTotalRevenue">0 ₼</h3>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #e8f5e9; color: #2ecc71;"><i
-                                class="fas fa-hand-holding-usd"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Xalis Mənfəət</span>
-                            <h3 id="statNetProfit">0 ₼</h3>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #fff3e0; color: #f39c12;"><i
-                                class="fas fa-box-open"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Anbar Dəyəri (Maya)</span>
-                            <h3 id="statStockValue">0 ₼</h3>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #f8d7da; color: #721c24;"><i class="fas fa-tools"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-label">Ümumi Əlavə Xərclər</span>
-                            <h3 id="statTotalExpenses">0 ₼</h3>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #fce4ec; color: #e91e63;"><i
-                                class="fas fa-shopping-cart"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Satılmış Məhsul</span>
-                            <h3 id="statSoldQuantity">0 ədəd</h3>
-                        </div>
-                    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #e3f2fd; color: #1976d2;"><i class="fas fa-box-open"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Öz Mallarım</span>
+            <h3 id="statOwnProfit">0 ₼</h3>
+        </div>
+    </div>
 
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #f3e5f5; color: #8e24aa;"><i
-                                class="fas fa-hourglass-half"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Ortalama Satış Sürəti</span>
-                            <h3 id="statAvgSaleTime">0 gün</h3>
-                        </div>
-                    </div>
-                </div>
+    <!-- 3. Vasitəçilik Kartı (Ikon yeniləndi: fa-handshake) -->
+<div class="stat-card">
+    <div class="stat-icon" style="background: #f3e5f5; color: #8e24aa;"><i class="fas fa-handshake"></i></div>
+    <div class="stat-info">
+        <span class="stat-label">Vasitəçilik</span>
+        <h3 id="statCommProfit">0 ₼</h3>
+    </div>
+</div>
+
+<!-- 4. Real Dövriyyə Kartı (Ikon yeniləndi: fa-chart-line) -->
+<div class="stat-card">
+    <div class="stat-icon" style="background: #fff8e1; color: #fbc02d;"><i class="fas fa-chart-line"></i></div>
+    <div class="stat-info">
+        <span class="stat-label">Real Dövriyyə</span>
+        <h3 id="statTotalRevenue">0 ₼</h3>
+    </div>
+</div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #ffebee; color: #d32f2f;"><i class="fas fa-receipt"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Cəmi Xərclər</span>
+            <h3 id="statTotalExpenses">0 ₼</h3>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #efebe9; color: #5d4037;"><i class="fas fa-warehouse"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Anbar Maya</span>
+            <h3 id="statStockValue">0 ₼</h3>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #e0f2f1; color: #00796b;"><i class="fas fa-cart-flatbed-suitcase"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Satılmış Sayı</span>
+            <h3 id="statSoldQuantity">0 ədəd</h3>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #eceff1; color: #455a64;"><i class="fas fa-bolt"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Satış Sürəti</span>
+            <h3 id="statAvgSaleTime">0 gün</h3>
+        </div>
+    </div>
+</div>
+
+<!-- 2. SON SATIŞLAR CƏDVƏLİ (Satan sütunu əlavə olundu) -->
+<div class="recent-sales">
+    <h3>Son Satışlar</h3>
+    <table id="salesTable">
+        <thead>
+            <tr>
+                <th>Məhsul</th>
+                <th>Satan / Sahib</th> <!-- YENİ SÜTUN -->
+                <th>Tarix</th>
+                <th>Alış</th>
+                <th>Satış</th>
+                <th>Qazanc</th>
+                <th>Sürət</th>
+            </tr>
+        </thead>
+        <tbody id="salesTableBody"></tbody>
+    </table>
+</div>
 
                 <!-- Qrafiklər -->
                 <div class="charts-row">
@@ -236,25 +272,7 @@
 
 
 
-                <!-- Son Satışlar Cədvəli -->
-                <div class="recent-sales">
-                    <h3>Son Satışlar</h3>
-                    <table id="salesTable">
-                        <thead>
-                            <tr>
-                                <th>Məhsul</th>
-                                <th>Tarix</th>
-                                <th>Alış</th>
-                                <th>Satış</th>
-                                <th>Qazanc</th>
-                                <th>Sürət</th> <!-- YENİ SÜTUN -->
-                            </tr>
-                        </thead>
-                        <tbody id="salesTableBody">
-                            <!-- JS ilə dolacaq -->
-                        </tbody>
-                    </table>
-                </div>
+            
             </section>
 
             <section id="wishlistSection" class="content-section" style="display:none;">
@@ -312,6 +330,35 @@
             <span class="close" onclick="closeModal()">&times;</span>
             <h2 id="modalTitle">Yeni Məhsul</h2>
             <form id="productForm">
+
+                <!-- index.html: title inputunun dərhal üstünə yapışdır -->
+                <div class="biznes-model-selector"
+                    style="margin-bottom: 15px; background: #f0f7ff; padding: 15px; border-radius: 8px;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 8px;">Məhsulun Sahibi:</label>
+                    <div style="display: flex; gap: 20px;">
+                        <label><input type="radio" name="biznesModeli" value="own" checked
+                                onclick="toggleBiznesModel()"> Mənə məxsusdur</label>
+                        <label><input type="radio" name="biznesModeli" value="commission" onclick="toggleBiznesModel()">
+                            Vasitəçiyəm (Komissiya)</label>
+                    </div>
+                </div>
+
+                <!-- Vasitəçi seçiləndə çıxacaq əlavə xanalar (Default olaraq gizlidir) -->
+                <div id="commissionFields"
+                    style="display: none; background: #fffde7; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ffe082;">
+                    <div class="row">
+                        <div class="input-group">
+                            <label>Mənim Qazancım (AZN)</label>
+                            <input type="number" id="commissionProfit" placeholder="Məs: 10">
+                        </div>
+                        <div class="input-group">
+                            <label>Malın Sahibinin Adı/Nömrəsi</label>
+                            <input type="text" id="ownerName" placeholder="Məs: Əli (055...)">
+                        </div>
+                    </div>
+                    <p style="font-size: 11px; color: #795548; margin: 0;">* Qeyd: Alış qiyməti avtomatik (Satış -
+                        Komissiya) olaraq hesablanacaq.</p>
+                </div>
                 <!-- Bunu modal içindəki formun daxilinə yapışdır -->
                 <input type="hidden" id="editProductId">
                 <div class="form-scroll">

@@ -4,7 +4,7 @@
     "status": "active",
     "satildigiTarix": null,
     "mehsulTitle": "Maraqlı kitab paketi (Dostoyevski, Brian Tracy və s.)",
-    "mehsulAciqlamasi": "Məhsul: 4 Kitab Bir Paketdə\nQiymət: 25 AZN (Dəst halında)\nVəziyyəti: Yeni kimidir, çox səliqəli saxlanılıb.\nKitabxananızı zənginləşdirmək üçün seçilmiş, oxunmamış 4 möhtəşəm əsəri tək paketdə təqdim edirik. Həm şəxsi inkişaf, həm klassika, həm də detektiv sevənlər üçün əla fürsətdir.\nPaketə daxildir:\nFyodor Dostoyevski (2 Cild): \"Cinayət və Cəza\" və \"İdiot\". Dünya ədəbiyyatı klassikləri seriyasından.\nBrian Tracy - \"Milyon Dollarlıq Vərdişlər\": Gəlirlərinizi artırmaq üçün biznes bələdçisi.\nÇingiz Abdullayev - \"Qırılmış Əlaqə\": Maraqlı və həyəcan dolu detektiv əsəri.",
+    "mehsulAciqlamasi": "Məhsul: 4 Kitab Bir Paketdə\nQiymət: 20 AZN (Dəst halında)\nVəziyyəti: Yeni kimidir, çox səliqəli saxlanılıb.\nKitabxananızı zənginləşdirmək üçün seçilmiş, oxunmamış 4 möhtəşəm əsəri tək paketdə təqdim edirik. Həm şəxsi inkişaf, həm klassika, həm də detektiv sevənlər üçün əla fürsətdir.\nPaketə daxildir:\nFyodor Dostoyevski (2 Cild): \"Cinayət və Cəza\" və \"İdiot\". Dünya ədəbiyyatı klassikləri seriyasından.\nBrian Tracy - \"Milyon Dollarlıq Vərdişlər\": Gəlirlərinizi artırmaq üçün biznes bələdçisi.\nÇingiz Abdullayev - \"Qırılmış Əlaqə\": Maraqlı və həyəcan dolu detektiv əsəri.",
     "mehsulQiymeti": "20",
     "alisQiymeti": "0",
     "mehsulunKateqoriyasi": "Kitablar",
@@ -69,5 +69,34 @@
         "amount": 5
       }
     ]
+  },
+  {
+    "id": "DT-1785222232159",
+    "status": "active",
+    "satildigiTarix": null,
+    "mehsulunYaradilmTarixi": "2026-07-28T07:03:52.159Z",
+    "kohneQiymet": null,
+    "mehsulTitle": "Kafel kəsən lazerli -130sm",
+    "mehsulAciqlamasi": "Peşəkar Kafel Kəsən Aparat (130 sm, Lazerli) – Problemsiz\nİri ölçülü kafel, metlax və keramo-qranitlərin dəqiq kəsimi üçün peşəkar aparat satılır. Aparat cəmi 1 il istifadə olunub, texniki cəhətdən tam qaydasındadır və heç bir problemi yoxdur.\nÜstünlükləri:\nUzunluq: 130 sm (1.30 m). Ən iri ölçülü kafeləri (məsələn, 120x60) rahatlıqla kəsir.\nLazer Sistemi: Dəqiq və düz xətt üzrə kəsim üçün lazer bələdçisi mövcuddur (işləkdir).\nMöhkəm Konstruksiya: Ağır və dözümlü gövdəyə malikdir, kəsim zamanı tərpənmir.\nVəziyyəti: İşləməsi idealdır, kəsici başlığı (almazı) yaxşı vəziyyətdədir.\nHəm peşəkar ustalar, həm də şəxsi tikinti işləri üçün mükəmməl alətdir. Mağaza qiymətindən çox daha sərfəli təklif olunur.",
+    "mehsulQiymeti": 110,
+    "alisQiymeti": 100,
+    "biznesModeli": "commission",
+    "komissiyaQazanci": 10,
+    "malSahibi": "Pervin exi",
+    "mehsulunKateqoriyasi": "Təmir Tikinti",
+    "mehsulunVeziyyeti": "islenmis",
+    "labels": [
+      "kafel kəsən",
+      "lazerli kafel kəsən",
+      "alət",
+      "alətlər",
+      ""
+    ],
+    "mehsulResmleri": [
+      "1785222231845-752334698_122196193940745903_2434459653760799751_n.jpg",
+      "1785222231986-756344055_122196193958745903_1486524429479741364_n.jpg"
+    ],
+    "mehsulXercleri": [],
+    "satildigiYer": null
   }
 ]
