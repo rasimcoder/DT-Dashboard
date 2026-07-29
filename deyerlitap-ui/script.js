@@ -220,6 +220,7 @@ function showSection(sectionId) {
     }
     else if (sectionId === 'analytics') {
         document.getElementById('analyticsSection').style.display = 'block';
+        populateYearFilter(); // 1. Əvvəl illəri dropdown-a doldur
         updateAnalytics();
     }
 }
@@ -420,6 +421,17 @@ document.getElementById('productForm').onsubmit = async (e) => {
 
         // 3. Bazaya yazırıq
         await saveData();
+
+         // Əgər bu redaktə deyil, YENİ məhsuldursa yoxlasın
+        const newEditId = document.getElementById('editProductId').value;
+        if (!newEditId) {
+            checkWishlistForNewProduct(currentTitle);
+        }
+
+        // 3. Formu təmizlə və modalı bağla
+        e.target.reset();
+        closeModal();
+        renderProducts(products.filter(p => p.status !== 'sold'));
 
         // 4. BİLDİRİŞ YOXLAMA
         if (typeof checkWishlistMatch === 'function') {
@@ -878,14 +890,23 @@ function filterByStatus(status) {
 // 1. Mövcud illəri tapıb dropdown-a dolduran funksiya
 function populateYearFilter() {
     const yearSelect = document.getElementById('filterYear');
+    if (!yearSelect) return;
+
+    // Yalnız satılan və tarixi olan məhsulları götürürük
     const soldItems = products.filter(p => p.status === 'sold' && p.satildigiTarix);
 
-    // Satılan məhsulların illərini götürürük
-    const years = [...new Set(soldItems.map(p => new Date(p.satildigiTarix).getFullYear()))];
+    // İlləri çıxarırıq və xətalı tarixləri (NaN) təmizləyirik
+    const years = [...new Set(soldItems.map(p => {
+        const year = new Date(p.satildigiTarix).getFullYear();
+        return isNaN(year) ? null : year;
+    }).filter(y => y !== null))];
 
-    // Köhnə illəri təmizləyirik (Bütün İllər-dən başqa)
+    console.log("Tapılan illər:", years); // Konsolda yoxlamaq üçün
+
+    // Dropdown-u sıfırlayırıq
     yearSelect.innerHTML = '<option value="all">Bütün İllər</option>';
 
+    // İlləri böyükdən kiçiyə düzüb əlavə edirik
     years.sort((a, b) => b - a).forEach(year => {
         yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
     });
@@ -894,6 +915,7 @@ function populateYearFilter() {
 // 2. Yenilənmiş Əsas Analitika Funksiyası (Komissiya və Satan məlumatı ilə)
 async function updateAnalytics() {
     if (!products || products.length === 0) return;
+
 
     const selectedYear = document.getElementById('filterYear').value;
     const selectedMonth = document.getElementById('filterMonth').value;
@@ -1013,81 +1035,68 @@ async function updateAnalytics() {
     initCharts(filteredSold, expenseGroups);
 }
 
-// Cədvəli/Listi doldurmaq üçün funksiyanın sonuna doğru bunu əlavə et:
-const expenseListDiv = document.getElementById('expenseBreakdownList');
-if(expenseListDiv) {
-    expenseListDiv.innerHTML = Object.values(expenseGroups).length > 0 
-        ? Object.values(expenseGroups)
-            .sort((a,b) => b.total - a.total)
-            .map(ex => `
-                <div class="expense-item">
-                    <span class="expense-name">${ex.name}</span>
-                    <span class="expense-amount">${ex.total.toLocaleString()} ₼</span>
-                </div>
-            `).join('')
-        : '<p style="color:#999; padding:10px;">Heç bir əlavə xərc yoxdur.</p>';
-}
+
 
 // Qrafiki çəkmək üçün initCharts-a ötürürük
-initCharts(filteredSold, expenseGroups);
+// initCharts(filteredSold, expenseGroups);
 
-    const netProfit = totalRevenue - totalCostOfSold;
+//     const netProfit = totalRevenue - totalCostOfSold;
     
-    // Ortalama satış müddəti
-    const avgSaleTime = filteredSold.length > 0 ? Math.round(totalSaleDays / filteredSold.length) : 0;
+//     // Ortalama satış müddəti
+//     const avgSaleTime = filteredSold.length > 0 ? Math.round(totalSaleDays / filteredSold.length) : 0;
 
-    // Hal-hazırda anbarda olanların mayası
-    const stockValue = products
-        .filter(p => p.status !== 'sold')
-        .reduce((sum, p) => sum + (Number(p.alisQiymeti) || 0), 0);
+//     // Hal-hazırda anbarda olanların mayası
+//     const stockValue = products
+//         .filter(p => p.status !== 'sold')
+//         .reduce((sum, p) => sum + (Number(p.alisQiymeti) || 0), 0);
 
-    // --- EKRANA ÇIXARIŞ ---
-    const setElText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = text;
-    };
+//     // --- EKRANA ÇIXARIŞ ---
+//     const setElText = (id, text) => {
+//         const el = document.getElementById(id);
+//         if (el) el.innerText = text;
+//     };
 
-    setElText('statTotalRevenue', totalRevenue.toLocaleString() + " ₼");
-    setElText('statNetProfit', netProfit.toLocaleString() + " ₼");
-    setElText('statStockValue', stockValue.toLocaleString() + " ₼");
-    setElText('statTotalExpenses', totalExtraExpenses.toLocaleString() + " ₼");
-    setElText('statSoldQuantity', filteredSold.length + " ədəd");
-    setElText('statAvgSaleTime', avgSaleTime + " gün"); // YENİ KART
+//     setElText('statTotalRevenue', totalRevenue.toLocaleString() + " ₼");
+//     setElText('statNetProfit', netProfit.toLocaleString() + " ₼");
+//     setElText('statStockValue', stockValue.toLocaleString() + " ₼");
+//     setElText('statTotalExpenses', totalExtraExpenses.toLocaleString() + " ₼");
+//     setElText('statSoldQuantity', filteredSold.length + " ədəd");
+//     setElText('statAvgSaleTime', avgSaleTime + " gün"); // YENİ KART
 
-    // --- CƏDVƏLİ DOLDURMAQ ---
-    const tableBody = document.getElementById('salesTableBody');
-    if (tableBody) {
-        tableBody.innerHTML = '';
-        const sortedItems = [...filteredSold].sort((a, b) => new Date(b.satildigiTarix) - new Date(a.satildigiTarix));
+//     // --- CƏDVƏLİ DOLDURMAQ ---
+//     const tableBody = document.getElementById('salesTableBody');
+//     if (tableBody) {
+//         tableBody.innerHTML = '';
+//         const sortedItems = [...filteredSold].sort((a, b) => new Date(b.satildigiTarix) - new Date(a.satildigiTarix));
 
-        sortedItems.slice(0, 20).forEach(p => {
-            const itemAlis = Number(p.alisQiymeti) || 0;
-            const itemExpenses = (p.mehsulXercleri || []).reduce((sum, ex) => sum + (Number(ex.amount) || 0), 0);
-            const realProfit = Number(p.mehsulQiymeti) - (itemAlis + itemExpenses);
+//         sortedItems.slice(0, 20).forEach(p => {
+//             const itemAlis = Number(p.alisQiymeti) || 0;
+//             const itemExpenses = (p.mehsulXercleri || []).reduce((sum, ex) => sum + (Number(ex.amount) || 0), 0);
+//             const realProfit = Number(p.mehsulQiymeti) - (itemAlis + itemExpenses);
 
-            // Məhsulun öz satış sürətini hesablayırıq
-            const entryDate = new Date(p.mehsulunYaradilmTarixi);
-            const saleDate = new Date(p.satildigiTarix);
-            const diffDays = Math.ceil(Math.abs(saleDate - entryDate) / (1000 * 60 * 60 * 24)) || 1;
+//             // Məhsulun öz satış sürətini hesablayırıq
+//             const entryDate = new Date(p.mehsulunYaradilmTarixi);
+//             const saleDate = new Date(p.satildigiTarix);
+//             const diffDays = Math.ceil(Math.abs(saleDate - entryDate) / (1000 * 60 * 60 * 24)) || 1;
             
-            // Sürətə görə rəng sinfi təyin edirik
-            let speedClass = diffDays <= 10 ? 'speed-fast' : (diffDays <= 30 ? 'speed-normal' : 'speed-slow');
+//             // Sürətə görə rəng sinfi təyin edirik
+//             let speedClass = diffDays <= 10 ? 'speed-fast' : (diffDays <= 30 ? 'speed-normal' : 'speed-slow');
 
-            tableBody.innerHTML += `
-                <tr>
-                    <td>${p.mehsulTitle}</td>
-                    <td>${new Date(p.satildigiTarix).toLocaleDateString('az-AZ')}</td>
-                    <td>${itemAlis} ₼</td>
-                    <td>${p.mehsulQiymeti} ₼</td>
-                    <td class="profit-text">+${realProfit.toLocaleString()} ₼</td>
-                    <td class="${speedClass}">${diffDays} gün</td>
-                </tr>
-            `;
-        });
-    }
+//             tableBody.innerHTML += `
+//                 <tr>
+//                     <td>${p.mehsulTitle}</td>
+//                     <td>${new Date(p.satildigiTarix).toLocaleDateString('az-AZ')}</td>
+//                     <td>${itemAlis} ₼</td>
+//                     <td>${p.mehsulQiymeti} ₼</td>
+//                     <td class="profit-text">+${realProfit.toLocaleString()} ₼</td>
+//                     <td class="${speedClass}">${diffDays} gün</td>
+//                 </tr>
+//             `;
+//         });
+//     }
 
-    // Qrafikləri yenilə
-    initCharts(filteredSold);
+//     // Qrafikləri yenilə
+//     initCharts(filteredSold);
 
 
 
@@ -1306,5 +1315,55 @@ function checkInventoryMatch(wishName) {
         setTimeout(() => {
             alert(message);
         }, 600);
+    }
+}
+
+
+function checkWishlistForNewProduct(newProductTitle) {
+    if (!wishlist || wishlist.length === 0) return;
+
+    // 1. Standartlaşdırma funksiyası
+    const normalize = (txt) => {
+        return txt.toLowerCase()
+            .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
+            .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
+            .replace(/ş/g, 's')
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+            .trim();
+    };
+
+    const productClean = normalize(newProductTitle);
+    
+    // 2. Yalnız "pending" (Gözləyən) statusunda olan müştəriləri yoxlayırıq
+    const potentialCustomers = wishlist.filter(wish => {
+        if (wish.status !== 'pending') return false;
+
+        const wishClean = normalize(wish.product);
+        const wishWords = wishClean.split(/\s+/).filter(w => w.length > 1);
+
+        // Məntiq: Müştərinin istədiyi sözlərin HAMISI yeni məhsulun adında varmı?
+        // Məsələn: Müştəri "iPhone 11" istəyir, sən "iPhone 11 Pro" əlavə edirsən -> MATCH!
+        return wishWords.every(word => productClean.includes(word));
+    });
+
+    // 3. Əgər müştəri tapılarsa, Alert veririk
+    if (potentialCustomers.length > 0) {
+        let alertMsg = `🚀 BU MƏHSULU GÖZLƏYƏN MÜŞTƏRİ VAR!\n`;
+        alertMsg += `Məhsul: "${newProductTitle}"\n`;
+        alertMsg += `==================================\n\n`;
+
+        potentialCustomers.forEach((c, index) => {
+            alertMsg += `${index + 1}. 👤 Müştəri: ${c.customer}\n`;
+            alertMsg += `   📞 Əlaqə: ${c.phone}\n`;
+            alertMsg += `   💰 Büdcə: ${c.budget} ₼\n`;
+            alertMsg += `   📝 İstək: ${c.product}\n`;
+            alertMsg += `----------------------------------\n`;
+        });
+
+        alertMsg += `\nElan yerləşdirməyə ehtiyac yoxdur, birbaşa zəng edin!`;
+
+        setTimeout(() => {
+            alert(alertMsg);
+        }, 700); // Məhsul yadda saxlanıldıqdan bir az sonra çıxsın
     }
 }
