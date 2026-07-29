@@ -48,9 +48,8 @@
                     <li class="nav-item" onclick="showSection('analytics')">
                         <i class="fas fa-chart-line"></i> Analitika
                     </li>
-
-
-                    <li class="nav-item" id="nav-wishlist" onclick="showSection('wishlist')">
+                    <!-- Sidebar-dakı Analitika-dan dərhal əvvəl və ya sonra yapışdır -->
+                    <li class="nav-item" onclick="showSection('wishlist')">
                         <i class="fas fa-clipboard-list"></i> Gözləmə Siyahısı
                     </li>
                 </ul>
@@ -145,94 +144,102 @@
                 </div>
 
                 <!-- Üst Stats Kartları -->
-  
-<!-- 1. ANALİTİKA KARTLARI (Iconlar əlavə olundu) -->
-<div class="stats-grid">
-    <div class="stat-card" style="border-top: 3px solid #2ecc71;">
-        <div class="stat-icon" style="background: #e8f5e9; color: #2ecc71;"><i class="fas fa-hand-holding-dollar"></i></div>
-        <div class="stat-info">
-            <span class="stat-label">Yekun Mənfəət</span>
-            <h3 id="statFinalProfit">0 ₼</h3>
-        </div>
-    </div>
 
-    <div class="stat-card">
-        <div class="stat-icon" style="background: #e3f2fd; color: #1976d2;"><i class="fas fa-box-open"></i></div>
-        <div class="stat-info">
-            <span class="stat-label">Öz Mallarım</span>
-            <h3 id="statOwnProfit">0 ₼</h3>
-        </div>
-    </div>
+                <!-- 1. ANALİTİKA KARTLARI (Iconlar əlavə olundu) -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-top: 3px solid #2ecc71;">
+                        <div class="stat-icon" style="background: #e8f5e9; color: #2ecc71;"><i
+                                class="fas fa-hand-holding-dollar"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Yekun Mənfəət</span>
+                            <h3 id="statFinalProfit">0 ₼</h3>
+                        </div>
+                    </div>
 
-    <!-- 3. Vasitəçilik Kartı (Ikon yeniləndi: fa-handshake) -->
-<div class="stat-card">
-    <div class="stat-icon" style="background: #f3e5f5; color: #8e24aa;"><i class="fas fa-handshake"></i></div>
-    <div class="stat-info">
-        <span class="stat-label">Vasitəçilik</span>
-        <h3 id="statCommProfit">0 ₼</h3>
-    </div>
-</div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e3f2fd; color: #1976d2;"><i
+                                class="fas fa-box-open"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Öz Mallarım</span>
+                            <h3 id="statOwnProfit">0 ₼</h3>
+                        </div>
+                    </div>
 
-<!-- 4. Real Dövriyyə Kartı (Ikon yeniləndi: fa-chart-line) -->
-<div class="stat-card">
-    <div class="stat-icon" style="background: #fff8e1; color: #fbc02d;"><i class="fas fa-chart-line"></i></div>
-    <div class="stat-info">
-        <span class="stat-label">Real Dövriyyə</span>
-        <h3 id="statTotalRevenue">0 ₼</h3>
-    </div>
-</div>
+                    <!-- 3. Vasitəçilik Kartı (Ikon yeniləndi: fa-handshake) -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #f3e5f5; color: #8e24aa;"><i
+                                class="fas fa-handshake"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Vasitəçilik</span>
+                            <h3 id="statCommProfit">0 ₼</h3>
+                        </div>
+                    </div>
 
-    <div class="stat-card">
-        <div class="stat-icon" style="background: #ffebee; color: #d32f2f;"><i class="fas fa-receipt"></i></div>
-        <div class="stat-info">
-            <span class="stat-label">Cəmi Xərclər</span>
-            <h3 id="statTotalExpenses">0 ₼</h3>
-        </div>
-    </div>
+                    <!-- 4. Real Dövriyyə Kartı (Ikon yeniləndi: fa-chart-line) -->
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #fff8e1; color: #fbc02d;"><i
+                                class="fas fa-chart-line"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Real Dövriyyə</span>
+                            <h3 id="statTotalRevenue">0 ₼</h3>
+                        </div>
+                    </div>
 
-    <div class="stat-card">
-        <div class="stat-icon" style="background: #efebe9; color: #5d4037;"><i class="fas fa-warehouse"></i></div>
-        <div class="stat-info">
-            <span class="stat-label">Anbar Maya</span>
-            <h3 id="statStockValue">0 ₼</h3>
-        </div>
-    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #ffebee; color: #d32f2f;"><i
+                                class="fas fa-receipt"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Cəmi Xərclər</span>
+                            <h3 id="statTotalExpenses">0 ₼</h3>
+                        </div>
+                    </div>
 
-    <div class="stat-card">
-        <div class="stat-icon" style="background: #e0f2f1; color: #00796b;"><i class="fas fa-cart-flatbed-suitcase"></i></div>
-        <div class="stat-info">
-            <span class="stat-label">Satılmış Sayı</span>
-            <h3 id="statSoldQuantity">0 ədəd</h3>
-        </div>
-    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #efebe9; color: #5d4037;"><i
+                                class="fas fa-warehouse"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Anbar Maya</span>
+                            <h3 id="statStockValue">0 ₼</h3>
+                        </div>
+                    </div>
 
-    <div class="stat-card">
-        <div class="stat-icon" style="background: #eceff1; color: #455a64;"><i class="fas fa-bolt"></i></div>
-        <div class="stat-info">
-            <span class="stat-label">Satış Sürəti</span>
-            <h3 id="statAvgSaleTime">0 gün</h3>
-        </div>
-    </div>
-</div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e0f2f1; color: #00796b;"><i
+                                class="fas fa-cart-flatbed-suitcase"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Satılmış Sayı</span>
+                            <h3 id="statSoldQuantity">0 ədəd</h3>
+                        </div>
+                    </div>
 
-<!-- 2. SON SATIŞLAR CƏDVƏLİ (Satan sütunu əlavə olundu) -->
-<div class="recent-sales">
-    <h3>Son Satışlar</h3>
-    <table id="salesTable">
-        <thead>
-            <tr>
-                <th>Məhsul</th>
-                <th>Satan / Sahib</th> <!-- YENİ SÜTUN -->
-                <th>Tarix</th>
-                <th>Alış</th>
-                <th>Satış</th>
-                <th>Qazanc</th>
-                <th>Sürət</th>
-            </tr>
-        </thead>
-        <tbody id="salesTableBody"></tbody>
-    </table>
-</div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #eceff1; color: #455a64;"><i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Satış Sürəti</span>
+                            <h3 id="statAvgSaleTime">0 gün</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. SON SATIŞLAR CƏDVƏLİ (Satan sütunu əlavə olundu) -->
+                <div class="recent-sales">
+                    <h3>Son Satışlar</h3>
+                    <table id="salesTable">
+                        <thead>
+                            <tr>
+                                <th>Məhsul</th>
+                                <th>Satan / Sahib</th> <!-- YENİ SÜTUN -->
+                                <th>Tarix</th>
+                                <th>Alış</th>
+                                <th>Satış</th>
+                                <th>Qazanc</th>
+                                <th>Sürət</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody"></tbody>
+                    </table>
+                </div>
 
                 <!-- Qrafiklər -->
                 <div class="charts-row">
@@ -272,7 +279,7 @@
 
 
 
-            
+
             </section>
 
             <section id="wishlistSection" class="content-section" style="display:none;">
@@ -305,10 +312,12 @@
 
             <!-- Wishlist Əlavə Etmə Modalı -->
             <div id="wishlistModal" class="modal">
+
                 <div class="modal-content" style="width: 400px;">
                     <span class="close" onclick="closeWishlistModal()">&times;</span>
                     <h2 style="border:none; padding-bottom:10px;">Yeni İstək Əlavə Et</h2>
                     <form id="wishlistForm">
+                        <input type="hidden" id="editWishId">
                         <div style="padding: 20px;">
                             <input type="text" id="wishCustomer" placeholder="Müştəri adı" required>
                             <input type="text" id="wishProduct" placeholder="Məhsul (məs: iPhone 12)" required>

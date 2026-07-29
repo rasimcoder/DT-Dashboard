@@ -1,114 +1,310 @@
-// Qlobal dəyişənlər - Proqramın beyni
+// ==========================================
+// Qlobal dəyişənlər - Sənin mövcud dəyişənlərin
+// ==========================================
 let directoryHandle = null;
-let selectedFiles = [];
-let currentExistingPhotos = []; // Redaktə edilən məhsulun mövcud şəkilləri
-let currentSellingId = null; // Satılacaq məhsulu müvəqqəti saxlamaq üçün
-let platformChartInstance = null; 
-let conditionChartInstance = null;
-let currentActiveSection = 'home'; // Hansı səhifədəyik? 
-let wishlist = [];
 let products = [];
+let wishlist = []; // Gözləmə siyahısı üçün massiv
+let selectedFiles = [];
+let currentExistingPhotos = [];
+let currentSellingId = null;
+let currentActiveSection = 'home';
+
+// Chart instances
+let platformChartInstance = null;
+let conditionChartInstance = null;
+let profitChartInstance = null;
+let categoryChartInstance = null;
 let expenseChartInstance = null;
 
-
 // DOM Elementləri
+
 const connectBtn = document.getElementById('connectBtn');
 const dbStatus = document.getElementById('dbStatus');
-const productForm = document.getElementById('productForm');
 const productGrid = document.getElementById('productGrid');
 const searchInput = document.getElementById('searchInput');
 
-// 1. QOVLUĞA QOŞULMA FUNKSİYASI
+// ==========================================
+// 1. QOVLUĞA QOŞULMA VƏ MƏLUMATLARIN YÜKLƏNMƏSİ
+// ==========================================
 async function connectToDB() {
     try {
-        // İstifadəçidən qovluq seçməsini istəyirik
-        directoryHandle = await window.showDirectoryPicker({
-            mode: 'readwrite'
-        });
-
-        // Yazma və oxuma icazəsini rəsmiləşdiririk
+        directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
         const options = { mode: 'readwrite' };
         if ((await directoryHandle.queryPermission(options)) !== 'granted') {
             await directoryHandle.requestPermission(options);
         }
 
-        // Uğurlu qoşulma vizualları
         dbStatus.innerText = "✅ Baza Aktivdir: " + directoryHandle.name;
         dbStatus.style.color = "#2ecc71";
         connectBtn.style.background = "#27ae60";
-        connectBtn.innerHTML = '<i class="fas fa-check-circle"></i> Qoşuldu';
 
-        // Məlumatları yüklə
         await loadData();
-
     } catch (err) {
         console.error("Qoşulma xətası:", err);
-        alert("Baza seçilmədi. İşləmək üçün 'Bazaya Qoşul' düyməsini sıxın.");
+        alert("Bazaya qoşulmaq mütləqdir!");
     }
 }
-
-// Düyməyə klik edəndə qoşulma funksiyasını çağırırıq
 connectBtn.addEventListener('click', connectToDB);
 
-
-// 2. Məlumatları Oxumaq (Məhsullar və Gözləmə Siyahısı)
 async function loadData() {
     if (!directoryHandle) return;
 
-    // --- Məhsulları (data.json) yükləyirik ---
+    // Məhsulları yüklə
     try {
         const fileHandle = await directoryHandle.getFileHandle('data.json', { create: true });
         const file = await fileHandle.getFile();
         const content = await file.text();
         products = content ? JSON.parse(content) : [];
         renderProducts(products);
-    } catch (err) {
-        console.log("data.json hələ boşdur və ya yaradılmayıb.");
-        products = [];
-        renderProducts([]);
-    }
+    } catch (err) { products = []; renderProducts([]); }
 
-    // --- Gözləmə Siyahısını (wishlist.json) yükləyirik (B Bəndi) ---
+    // Wishlist-i yüklə
     try {
         const wishHandle = await directoryHandle.getFileHandle('wishlist.json', { create: true });
         const wishFile = await wishHandle.getFile();
         const wishContent = await wishFile.text();
         wishlist = wishContent ? JSON.parse(wishContent) : [];
-        console.log("Gözləmə siyahısı uğurla yükləndi.");
-    } catch (e) {
-        console.log("wishlist.json hələ boşdur və ya yaradılmayıb.");
-        wishlist = [];
-    }
+        renderWishlist();
+    } catch (e) { wishlist = []; }
 }
 
-// 3. MƏLUMATLARI YADDA SAXLAMAQ (Məhsullar və Gözləmə Siyahısı)
 async function saveData() {
-    if (!directoryHandle) {
-        alert("Xəta: Bazaya qoşulmayıb!");
-        return;
-    }
-
+    if (!directoryHandle) return;
     try {
+        // Məhsulları yadda saxla
         const fileHandle = await directoryHandle.getFileHandle('data.json', { create: true });
         const writable = await fileHandle.createWritable();
-        await writable.truncate(0);
-        const content = JSON.stringify(products, null, 2);
-        await writable.write(content);
+        await writable.write(JSON.stringify(products, null, 2));
         await writable.close();
 
-        // Wishlist üçün də yadda saxla
+        // Wishlist-i yadda saxla
         const wishHandle = await directoryHandle.getFileHandle('wishlist.json', { create: true });
         const wishWritable = await wishHandle.createWritable();
-        await wishWritable.truncate(0);
         await wishWritable.write(JSON.stringify(wishlist, null, 2));
         await wishWritable.close();
+        
+        console.log("Bütün məlumatlar E: diskinə yazıldı.");
+    } catch (err) { console.error("Yadda saxlama xətası:", err); }
+}
 
-        console.log("Məlumatlar diskə həkk olundu.");
-        // BURADAN renderProducts ÇAĞIRIŞINI SİLDİK!
-    } catch (err) {
-        console.error("Yadda saxlama xətası:", err);
+// ==========================================
+// 2. WISH-LIST (GÖZLƏMƏ SİYAHISI) MƏNTİQİ
+// ==========================================
+
+
+// ==========================================
+// WISH-LIST (GÖZLƏMƏ SİYAHISI) - UPDATE & DELETE
+// ==========================================
+
+function openWishlistModal() { 
+    document.getElementById('wishlistModal').style.display = 'block'; 
+    document.getElementById('wishlistForm').reset();
+    document.getElementById('editWishId').value = ""; // ID-ni sıfırla (yeni əlavə üçün)
+}
+
+function closeWishlistModal() { 
+    document.getElementById('wishlistModal').style.display = 'none';
+}
+
+// 1. REDAKTƏ ÜÇÜN MODALI AÇAN FUNKSİYA
+function openEditWishlistModal(id) {
+    const wish = wishlist.find(x => x.id === id);
+    if (!wish) return;
+
+    // Modalı aç və məlumatları doldur
+    document.getElementById('wishlistModal').style.display = 'block';
+    document.getElementById('editWishId').value = wish.id;
+    document.getElementById('wishCustomer').value = wish.customer;
+    document.getElementById('wishProduct').value = wish.product;
+    document.getElementById('wishBudget').value = wish.budget;
+    document.getElementById('wishPhone').value = wish.phone;
+    document.getElementById('wishNote').value = wish.note;
+}
+
+// 2. FORM TƏQDİMİ (HƏM YENİ, HƏM UPDATE)
+document.getElementById('wishlistForm').onsubmit = async (e) => {
+    e.preventDefault();
+    if (!directoryHandle) { alert("Əvvəlcə bazaya qoşulun!"); return; }
+
+    const editId = document.getElementById('editWishId').value;
+    const wishProductName = document.getElementById('wishProduct').value; // Müştərinin istədiyi məhsul
+    
+    const wishData = {
+        customer: document.getElementById('wishCustomer').value,
+        product: wishProductName,
+        budget: document.getElementById('wishBudget').value,
+        phone: document.getElementById('wishPhone').value,
+        note: document.getElementById('wishNote').value
+    };
+
+    if (editId) {
+        const index = wishlist.findIndex(x => x.id === editId);
+        if (index !== -1) wishlist[index] = { ...wishlist[index], ...wishData };
+    } else {
+        const newWish = {
+            id: "WISH-" + Date.now(),
+            ...wishData,
+            status: 'pending',
+            date: new Date().toLocaleDateString('az-AZ')
+        };
+        wishlist.push(newWish);
+    }
+
+    // 1. Məlumatı bazaya yazırıq
+    await saveData();
+    renderWishlist();
+    closeWishlistModal();
+
+    // 2. MÜHÜM: ANBARDA MƏHSULUN OLUB-OLMADIĞINI YOXLAYIRIQ (Addım 2-dəki funksiya)
+    if (!editId) { // Yalnız yeni əlavə ediləndə yoxlasın (opsional)
+        checkInventoryMatch(wishProductName);
+    }
+};
+
+// 3. RENDER FUNKSİYASI (YENİLƏNDİ: UPDATE ICON İLƏ)
+function renderWishlist(dataToDisplay = wishlist) {
+    const body = document.getElementById('wishlistBody');
+    if (!body) return;
+    
+    body.innerHTML = ''; // Cədvəli təmizlə
+
+    dataToDisplay.forEach(w => {
+        body.innerHTML += `
+            <tr>
+                <td><strong>${w.customer}</strong></td>
+                <td>${w.product}</td>
+                <td>${w.budget} ₼</td>
+                <td>${w.phone}</td>
+                <td><span class="status-badge ${w.status}">${w.status === 'pending' ? 'Gözləyir' : 'Tamamlandı'}</span></td>
+                <td>
+                    <button onclick="openEditWishlistModal('${w.id}')" style="color:#3498db; background:none; border:none; cursor:pointer;"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteWish('${w.id}')" style="color:#e74c3c; background:none; border:none; cursor:pointer; margin-left:10px;"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// 4. SİLMƏ FUNKSİYASI
+async function deleteWish(id) {
+    if(confirm("Bu müştəri istəyini siyahıdan tamamilə silmək istəyirsiniz?")) {
+        wishlist = wishlist.filter(x => x.id !== id);
+        await saveData();
+        renderWishlist();
     }
 }
+
+// ==========================================
+// 3. SƏHİFƏ İDARƏETMƏSİ (MODUL KEÇİDLƏRİ)
+// ==========================================
+function showSection(sectionId) {
+    console.log("Keçid edilən bölmə:", sectionId);
+    currentActiveSection = sectionId; // <--- Bu sətir mütləq olmalıdır!
+
+    // Bütün bölmələri gizlət
+    document.getElementById('productGrid').style.display = 'none';
+    document.getElementById('analyticsSection').style.display = 'none';
+    document.getElementById('wishlistSection').style.display = 'none';
+    if (document.getElementById('productDetailView')) document.getElementById('productDetailView').style.display = 'none';
+
+    // Axtarış qutusunu təmizlə ki, qarışıqlıq olmasın
+    document.getElementById('searchInput').value = '';
+
+    if (sectionId === 'home') {
+        document.getElementById('productGrid').style.display = 'grid';
+        renderProducts(products.filter(p => p.status !== 'sold'));
+    } 
+    else if (sectionId === 'wishlist') {
+        document.getElementById('wishlistSection').style.display = 'block';
+        renderWishlist(wishlist); // Siyahını tam göstər
+    }
+    else if (sectionId === 'analytics') {
+        document.getElementById('analyticsSection').style.display = 'block';
+        updateAnalytics();
+    }
+}
+
+// Axtarış funksiyasını hər iki bölməyə uyğunlaşdırırıq
+function handleSearch() {
+    const sInput = document.getElementById('searchInput');
+    if (!sInput) return;
+
+    // 1. Axtarış sözünü standart hala salırıq
+    const query = sInput.value.toLowerCase()
+        .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
+        .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
+        .replace(/ş/g, 's').trim();
+
+    if (currentActiveSection === 'wishlist') {
+        // 2. WISH-LIST ÜÇÜN QLOBAL AXTARIŞ (Bütün xanalar üzrə)
+        const filteredWishes = wishlist.filter(item => {
+            // Hər bir xananı təmizləyirik (əgər xana boşdursa, xəta verməsin deyə "" qoyuruq)
+            const customer = (item.customer || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            const product = (item.product || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            const phone = (item.phone || "").toLowerCase();
+            const budget = (item.budget || "").toString();
+            const note = (item.note || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            
+            // Statusu Azərbaycan dilində axtarışa uyğunlaşdırırıq
+            const statusText = item.status === 'pending' ? 'gozleyir' : 'tamamlandi';
+
+            // Yoxlayırıq: Bu xanaların hər hansı birində axtarılan söz varmı?
+            return customer.includes(query) || 
+                   product.includes(query) || 
+                   phone.includes(query) || 
+                   budget.includes(query) || 
+                   note.includes(query) ||
+                   statusText.includes(query);
+        });
+        
+        renderWishlist(filteredWishes);
+    } 
+    else if (currentActiveSection === 'home') {
+        // 3. MƏHSULLAR ÜÇÜN AXTARIŞ
+        const filteredProducts = products.filter(p => {
+            if (p.status === 'sold') return false;
+            const title = (p.mehsulTitle || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            const category = (p.mehsulunKateqoriyasi || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            
+            return title.includes(query) || category.includes(query);
+        });
+        renderProducts(filteredProducts);
+    }
+}
+
+// ==========================================
+// 4. MƏHSUL ƏLAVƏ EDƏNDƏ WISH-LIST-LƏ YOXLAMA
+// ==========================================
+// Bu funksiyanı məhsul formunun sonunda çağırmalısan
+function checkWishlistMatch(productTitle) {
+    const normalizedProduct = productTitle.toLowerCase();
+    const match = wishlist.find(w => 
+        w.status === 'pending' && normalizedProduct.includes(w.product.toLowerCase())
+    );
+
+    if (match) {
+        setTimeout(() => {
+            alert(`🚀 MÜŞTƏRİ TAPILDI!\n\n"${productTitle}" məhsulunu gözləyən var:\n👤 Müştəri: ${match.customer}\n📞 Əlaqə: ${match.phone}`);
+        }, 800);
+    }
+}
+
+// Sənin mövcud productForm.onsubmit funksiyasının sonuna "checkWishlistMatch(currentTitle);" əlavə etməyi unutma!
+
+// ==========================================
+// KÖHNƏ FUNKSİYALARIN DAVAMI (Səndə olanlar)
+// ==========================================
+function toggleCategories() {
+    const menu = document.getElementById('categoryMenu');
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+}
+
+// Qeyd: Sənin digər funksiyaların (renderProducts, updateAnalytics, openModal və s.) 
+// olduğu kimi qalır, çünki showSection və saveData onları dəstəkləyir.
+
+
+
+
 
 // 4. ŞƏKİLLƏRİ "images" QOVLUĞUNA KOPYALAMAQ
 async function saveImagesLocally(files) {
@@ -379,15 +575,38 @@ async function editPrice(id) {
 
 // 9. AXTARIŞ SİSTEMİ
 function handleSearch() {
-    const q = searchInput.value.toLowerCase();
-    const filtered = products.filter(p =>
-        p.mehsulTitle.toLowerCase().includes(q) ||
-        p.mehsulunKateqoriyasi.toLowerCase().includes(q) ||
-        p.labels.some(l => l.toLowerCase().includes(q))
-    );
-    renderProducts(filtered);
+    const sInput = document.getElementById('searchInput');
+    if (!sInput) return;
+
+    // Axtarılan sözü kiçik hərflərə salırıq (Azərbaycan hərfləri daxil)
+    const query = sInput.value.toLowerCase()
+        .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
+        .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
+        .replace(/ş/g, 's').trim();
+
+    console.log("Axtarış edilir: ", query, "Səhifə: ", currentActiveSection);
+
+    // MƏNTİQ BURADADIR:
+    if (currentActiveSection === 'wishlist') {
+        // 1. Əgər Wishlist səhifəsindəyiksə:
+        const filteredWishes = wishlist.filter(item => {
+            const customer = item.customer.toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            const product = item.product.toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            return customer.includes(query) || product.includes(query);
+        });
+        renderWishlist(filteredWishes); // Tapılanları Wishlist cədvəlinə göndər
+    } 
+    else if (currentActiveSection === 'home') {
+        // 2. Əgər Ana Səhifədəyiksə:
+        const filteredProducts = products.filter(p => {
+            if (p.status === 'sold') return false; // Satılanları axtarma
+            const title = p.mehsulTitle.toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            return title.includes(query);
+        });
+        renderProducts(filteredProducts); // Tapılanları Məhsul Grid-inə göndər
+    }
 }
-searchInput.oninput = handleSearch;
+
 
 // 10. DRAG & DROP İDARƏETMƏSİ
 const dropZone = document.getElementById('dropZone');
@@ -656,11 +875,6 @@ function filterByStatus(status) {
 
 
 
-
-// Analitika üçün Qrafik dəyişənləri (Yenidən yüklədikdə köhnəsini silmək üçün)
-let profitChartInstance = null;
-let categoryChartInstance = null;
-
 // 1. Mövcud illəri tapıb dropdown-a dolduran funksiya
 function populateYearFilter() {
     const yearSelect = document.getElementById('filterYear');
@@ -877,54 +1091,7 @@ initCharts(filteredSold, expenseGroups);
 
 
 
-function showSection(sectionId) {
-    console.log("Səhifə keçidi:", sectionId);
-    currentActiveSection = sectionId;
 
-    // 1. Axtarış qutusunu təmizlə
-    const sInput = document.getElementById('searchInput');
-    if (sInput) sInput.value = '';
-
-    // 2. Bütün bölmələrin ID-lərini siyahı halında gizlət
-    const sectionList = ['productGrid', 'analyticsSection', 'wishlistSection', 'productDetailView'];
-    sectionList.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.setProperty('display', 'none', 'important');
-    });
-
-    // 3. Seçilən bölməni göstər
-    if (sectionId === 'analytics') {
-        const target = document.getElementById('analyticsSection');
-        if (target) {
-            target.style.setProperty('display', 'block', 'important');
-            setTimeout(() => {
-                populateYearFilter();
-                updateAnalytics();
-            }, 100);
-        }
-    } 
-    else if (sectionId === 'wishlist') {
-        const target = document.getElementById('wishlistSection');
-        if (target) {
-            target.style.setProperty('display', 'block', 'important');
-            renderWishlist(); // wishlist massivini göstər
-        }
-    } 
-    // script.js - showSection funksiyasının daxilindəki 'else' (home) hissəsini dəyiş:
-else {
-    const grid = document.getElementById('productGrid');
-    if (grid) {
-        grid.style.setProperty('display', 'grid', 'important');
-        
-        // MÜHÜM: Yalnız statusu 'sold' OLMAYANLARI süzürük
-        const activeProducts = products.filter(p => p.status !== 'sold');
-        renderProducts(activeProducts);
-    }
-}
-
-    // Sidebar aktivlik vizualı
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-}
 
 function initCharts(soldItems, expenseGroups = {}) {
     // 1. Köhnə qrafikləri tam silirik
@@ -1044,105 +1211,6 @@ function getExpensesFromForm() {
 
 
 
-// Wishlist idarəetmə funksiyaları
-function openWishlistModal() { document.getElementById('wishlistModal').style.display = 'block'; }
-function closeWishlistModal() { document.getElementById('wishlistModal').style.display = 'none'; }
-
-document.getElementById('wishlistForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const newWish = {
-        id: "WISH-" + Date.now(),
-        customer: document.getElementById('wishCustomer').value,
-        product: document.getElementById('wishProduct').value,
-        budget: document.getElementById('wishBudget').value,
-        phone: document.getElementById('wishPhone').value,
-        note: document.getElementById('wishNote').value,
-        status: 'pending'
-    };
-    wishlist.push(newWish);
-    await saveData(); // Həm məhsulları həm wishlist-i yadda saxlayır
-    e.target.reset();
-    closeWishlistModal();
-    renderWishlist();
-};
-
-// 1. Render funksiyasını filtrləməyə uyğunlaşdırırıq
-function renderWishlist(dataToRender = wishlist) {
-    const body = document.getElementById('wishlistBody');
-    if (!body) return;
-    
-    body.innerHTML = '';
-    dataToRender.forEach(w => {
-        const isPending = w.status === 'pending';
-        body.innerHTML += `
-            <tr>
-                <td>${w.customer}</td>
-                <td><strong>${w.product}</strong></td>
-                <td>${w.budget} ₼</td>
-                <td>${w.phone}</td>
-                <td><span class="status-${w.status}">${isPending ? 'Gözləyir' : 'Tamamlandı'}</span></td>
-                <td>
-                    <button class="btn-action" onclick="toggleWishStatus('${w.id}')" style="color:#2ecc71"><i class="fas fa-check-circle"></i></button>
-                    <button class="btn-action" onclick="deleteWish('${w.id}')" style="color:#e74c3c"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `;
-    });
-}
-
-// 2. Canlı axtarış funksiyası
-function handleWishlistSearch() {
-    const query = normalizeText(document.getElementById('wishlistSearchInput').value);
-    
-    const filtered = wishlist.filter(w => {
-        return normalizeText(w.customer).includes(query) ||
-               normalizeText(w.product).includes(query) ||
-               normalizeText(w.budget).includes(query) ||
-               normalizeText(w.phone).includes(query) ||
-               normalizeText(w.status === 'pending' ? 'gozleyir' : 'tamamlandi').includes(query);
-    });
-
-    renderWishlist(filtered);
-}
-
-async function toggleWishStatus(id) {
-    const item = wishlist.find(x => x.id === id);
-    if(item) {
-        item.status = item.status === 'pending' ? 'done' : 'pending';
-        await saveData();
-        renderWishlist();
-    }
-}
-
-async function deleteWish(id) {
-    if(confirm("Silmək istəyirsiniz?")) {
-        wishlist = wishlist.filter(x => x.id !== id);
-        await saveData();
-        renderWishlist();
-    }
-}
-
-
-
-// Yeni məhsulla gözləmə siyahısını müqayisə edən funksiya
-function checkWishlistMatch(productTitle) {
-    if (!wishlist || wishlist.length === 0) return;
-
-    const normalizedProduct = normalizeText(productTitle);
-
-    const match = wishlist.find(w => {
-        const normalizedWish = normalizeText(w.product);
-        return w.status === 'pending' && 
-               (normalizedProduct.includes(normalizedWish) || normalizedWish.includes(normalizedProduct));
-    });
-
-    if (match) {
-        setTimeout(() => {
-            alert(`🚀 MÜŞTƏRİ TAPILDI!\n\n"${productTitle}" məhsulunu gözləyən var:\n\n👤 Müştəri: ${match.customer}\n📞 Əlaqə: ${match.phone}\n💰 Büdcə: ${match.budget} ₼`);
-        }, 600);
-    }
-}
-
 
 
 
@@ -1161,46 +1229,6 @@ function normalizeText(text) {
 
 
 
-// 1. Yazıları təmizləyən funksiya
-function normalizeText(text) {
-    if (!text) return "";
-    return text.toString().toLowerCase().trim()
-        .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
-        .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
-        .replace(/ş/g, 's');
-}
-
-// 2. Qlobal Axtarış (Bütün səhifələr üçün tək beyin)
-function handleSearch() {
-    const searchInput = document.getElementById('searchInput');
-    if (!searchInput) return;
-
-    const query = normalizeText(searchInput.value);
-
-    if (currentActiveSection === 'wishlist') {
-        // Gözləmə siyahısında axtar
-        const filtered = wishlist.filter(w => 
-            normalizeText(w.customer).includes(query) ||
-            normalizeText(w.product).includes(query) ||
-            normalizeText(w.phone).includes(query)
-        );
-        renderWishlist(filtered);
-    } // script.js - handleSearch içindəki home hissəsi:
-else if (currentActiveSection === 'home') {
-    const normalizedQuery = normalizeText(query);
-    
-    // ƏVVƏLCƏ yalnız aktivləri götürürük
-    const activeOnly = products.filter(p => p.status !== 'sold');
-    
-    // SONRA onlar arasında axtarış edirik
-    const filtered = activeOnly.filter(p => 
-        normalizeText(p.mehsulTitle).includes(normalizedQuery) ||
-        normalizeText(p.mehsulunKateqoriyasi).includes(normalizedQuery)
-    );
-    renderProducts(filtered);
-}
-}
-
 
 // script.js sonuna yapışdır
 function toggleBiznesModel() {
@@ -1215,5 +1243,68 @@ function toggleBiznesModel() {
     } else {
         commFields.style.display = 'none';
         costInputGroup.style.display = 'block'; // Alış qiymətini geri gətiririk
+    }
+}
+
+
+
+function checkInventoryMatch(wishName) {
+    if (!products || products.length === 0) return;
+
+    // 1. Yazını təmizləyən və standartlaşdıran daxili funksiya
+    const normalize = (txt) => {
+        return txt.toLowerCase()
+            .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
+            .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
+            .replace(/ş/g, 's')
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Durğu işarələrini silir
+            .trim();
+    };
+
+    // 2. Müştərinin istəyini sözlərə bölürük (Tokenization)
+    const wishClean = normalize(wishName);
+    const wishWords = wishClean.split(/\s+/).filter(word => word.length > 1); // 1 hərfdən uzun olan sözləri götürürük
+
+    // 3. Aktiv məhsullar arasında axtarış
+    const matches = products.filter(p => {
+        if (p.status === 'sold') return false;
+
+        const productTitleClean = normalize(p.mehsulTitle);
+
+        // ƏSAS MƏNTİQ: Müştərinin yazdığı HƏR BİR söz məhsulun başlığında varmı?
+        // Ardıcıllıq vacib deyil!
+        return wishWords.every(word => productTitleClean.includes(word));
+    });
+
+    // 4. Əgər heç nə tapılmasa, bir az daha yumşaq axtarış edirik (Optional)
+    // Məsələn: 3 sözdən 2-si uyğun gəlsə belə göstərsin
+    let finalMatches = matches;
+    if (finalMatches.length === 0 && wishWords.length > 1) {
+        finalMatches = products.filter(p => {
+            if (p.status === 'sold') return false;
+            const productTitleClean = normalize(p.mehsulTitle);
+            const matchCount = wishWords.filter(word => productTitleClean.includes(word)).length;
+            return matchCount >= Math.ceil(wishWords.length * 0.7); // 70% uyğunluq
+        });
+    }
+
+    // 5. Nəticəni ekrana çıxarırıq
+    if (finalMatches.length > 0) {
+        let message = `🚀 MÜJDƏ! ANBARDA UYĞUNLUQ TAPILDI!\n\n`;
+        message += `Siz yazdınız: "${wishName}"\n`;
+        message += `----------------------------------\n`;
+        
+        finalMatches.forEach((m, index) => {
+            message += `${index + 1}. ${m.mehsulTitle}\n`;
+            message += `💰 Qiymət: ${m.mehsulQiymeti} ₼\n`;
+            message += `📍 Vəziyyəti: ${m.mehsulunVeziyyeti === 'yeni' ? 'Yeni' : 'İşlənmiş'}\n`;
+            message += `----------------------------------\n`;
+        });
+
+        message += `\nMəlumatları yoxlayıb müştəri ilə əlaqə saxlaya bilərsiniz.`;
+
+        setTimeout(() => {
+            alert(message);
+        }, 600);
     }
 }
