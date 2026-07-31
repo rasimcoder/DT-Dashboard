@@ -16,6 +16,9 @@ let profitChartInstance = null;
 let categoryChartInstance = null;
 let expenseChartInstance = null;
 
+let currentWishPage = 1; // Hal-hazırda hansı səhifədəyik
+const wishRowsPerPage = 10; // Hər səhifədə neçə sətir olsun
+
 // DOM Elementləri
 
 const connectBtn = document.getElementById('connectBtn');
@@ -127,7 +130,7 @@ document.getElementById('wishlistForm').onsubmit = async (e) => {
     if (!directoryHandle) { alert("Əvvəlcə bazaya qoşulun!"); return; }
 
     const editId = document.getElementById('editWishId').value;
-    const wishProductName = document.getElementById('wishProduct').value; // Müştərinin istədiyi məhsul
+    const wishProductName = document.getElementById('wishProduct').value; // Müştərinin yazdığı məhsul
     
     const wishData = {
         customer: document.getElementById('wishCustomer').value,
@@ -138,9 +141,11 @@ document.getElementById('wishlistForm').onsubmit = async (e) => {
     };
 
     if (editId) {
+        // REDAKTƏ
         const index = wishlist.findIndex(x => x.id === editId);
         if (index !== -1) wishlist[index] = { ...wishlist[index], ...wishData };
     } else {
+        // YENİ ƏLAVƏ
         const newWish = {
             id: "WISH-" + Date.now(),
             ...wishData,
@@ -150,15 +155,20 @@ document.getElementById('wishlistForm').onsubmit = async (e) => {
         wishlist.push(newWish);
     }
 
-    // 1. Məlumatı bazaya yazırıq
-    await saveData();
-    renderWishlist();
-    closeWishlistModal();
-
-    // 2. MÜHÜM: ANBARDA MƏHSULUN OLUB-OLMADIĞINI YOXLAYIRIQ (Addım 2-dəki funksiya)
-    if (!editId) { // Yalnız yeni əlavə ediləndə yoxlasın (opsional)
+    // 1. ANBARDA MƏHSULUN OLUB-OLMADIĞINI YOXLAYIRIQ (Addım 2-dəki funksiya)
+    // Redaktə yox, yalnız yeni əlavə ediləndə yoxlasın
+    if (!editId) { 
         checkInventoryMatch(wishProductName);
     }
+
+    // 2. Məlumatı bazaya yazırıq
+    await saveData();
+    
+    // 3. Səhifələmə ilə birgə cədvəli yeniləyirik
+    renderWishlist(); 
+    
+    // 4. Modalı bağlayırıq (Formu sıfırlayır)
+    closeWishlistModal();
 };
 
 // 3. RENDER FUNKSİYASI (YENİLƏNDİ: UPDATE ICON İLƏ)
@@ -166,9 +176,27 @@ function renderWishlist(dataToDisplay = wishlist) {
     const body = document.getElementById('wishlistBody');
     if (!body) return;
     
+    // --- SƏHİFƏLƏMƏ (PAGINATION) MƏNTİQİ ---
+    const totalItems = dataToDisplay.length;
+    const totalPages = Math.ceil(totalItems / wishRowsPerPage);
+
+    // Səhifə nömrəsi limitləri aşmasın
+    if (currentWishPage > totalPages && totalPages > 0) currentWishPage = totalPages;
+    if (currentWishPage < 1) currentWishPage = 1;
+
+    // Siyahını kəsirik (məsələn, 0-dan 10-a qədər)
+    const startIndex = (currentWishPage - 1) * wishRowsPerPage;
+    const endIndex = startIndex + wishRowsPerPage;
+    const paginatedData = dataToDisplay.slice(startIndex, endIndex);
+    // ---------------------------------------
+
     body.innerHTML = ''; // Cədvəli təmizlə
 
-    dataToDisplay.forEach(w => {
+    if (paginatedData.length === 0) {
+        body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#999;">Məlumat tapılmadı.</td></tr>';
+    }
+
+    paginatedData.forEach(w => {
         body.innerHTML += `
             <tr>
                 <td><strong>${w.customer}</strong></td>
@@ -183,6 +211,9 @@ function renderWishlist(dataToDisplay = wishlist) {
             </tr>
         `;
     });
+
+    // Düymələri ekrana çıxarırıq
+    renderWishPagination(totalItems, dataToDisplay);
 }
 
 // 4. SİLMƏ FUNKSİYASI
@@ -190,7 +221,7 @@ async function deleteWish(id) {
     if(confirm("Bu müştəri istəyini siyahıdan tamamilə silmək istəyirsiniz?")) {
         wishlist = wishlist.filter(x => x.id !== id);
         await saveData();
-        renderWishlist();
+        renderWishlist(); // Səhifələmə daxildə avtomatik tənzimlənəcək
     }
 }
 
@@ -198,16 +229,13 @@ async function deleteWish(id) {
 // 3. SƏHİFƏ İDARƏETMƏSİ (MODUL KEÇİDLƏRİ)
 // ==========================================
 function showSection(sectionId) {
-    console.log("Keçid edilən bölmə:", sectionId);
-    currentActiveSection = sectionId; // <--- Bu sətir mütləq olmalıdır!
+    currentActiveSection = sectionId;
 
-    // Bütün bölmələri gizlət
     document.getElementById('productGrid').style.display = 'none';
     document.getElementById('analyticsSection').style.display = 'none';
     document.getElementById('wishlistSection').style.display = 'none';
     if (document.getElementById('productDetailView')) document.getElementById('productDetailView').style.display = 'none';
 
-    // Axtarış qutusunu təmizlə ki, qarışıqlıq olmasın
     document.getElementById('searchInput').value = '';
 
     if (sectionId === 'home') {
@@ -215,12 +243,13 @@ function showSection(sectionId) {
         renderProducts(products.filter(p => p.status !== 'sold'));
     } 
     else if (sectionId === 'wishlist') {
+        currentWishPage = 1; // Səhifəyə girişi 1-dən başla
         document.getElementById('wishlistSection').style.display = 'block';
-        renderWishlist(wishlist); // Siyahını tam göstər
+        renderWishlist(wishlist);
     }
     else if (sectionId === 'analytics') {
         document.getElementById('analyticsSection').style.display = 'block';
-        populateYearFilter(); // 1. Əvvəl illəri dropdown-a doldur
+        populateYearFilter();
         updateAnalytics();
     }
 }
@@ -230,44 +259,29 @@ function handleSearch() {
     const sInput = document.getElementById('searchInput');
     if (!sInput) return;
 
-    // 1. Axtarış sözünü standart hala salırıq
     const query = sInput.value.toLowerCase()
         .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
         .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
         .replace(/ş/g, 's').trim();
 
     if (currentActiveSection === 'wishlist') {
-        // 2. WISH-LIST ÜÇÜN QLOBAL AXTARIŞ (Bütün xanalar üzrə)
+        currentWishPage = 1; // Axtarış zamanı səhifəni sıfırla
         const filteredWishes = wishlist.filter(item => {
-            // Hər bir xananı təmizləyirik (əgər xana boşdursa, xəta verməsin deyə "" qoyuruq)
             const customer = (item.customer || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
             const product = (item.product || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
             const phone = (item.phone || "").toLowerCase();
             const budget = (item.budget || "").toString();
-            const note = (item.note || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
-            
-            // Statusu Azərbaycan dilində axtarışa uyğunlaşdırırıq
             const statusText = item.status === 'pending' ? 'gozleyir' : 'tamamlandi';
 
-            // Yoxlayırıq: Bu xanaların hər hansı birində axtarılan söz varmı?
-            return customer.includes(query) || 
-                   product.includes(query) || 
-                   phone.includes(query) || 
-                   budget.includes(query) || 
-                   note.includes(query) ||
-                   statusText.includes(query);
+            return customer.includes(query) || product.includes(query) || phone.includes(query) || budget.includes(query) || statusText.includes(query);
         });
-        
         renderWishlist(filteredWishes);
     } 
     else if (currentActiveSection === 'home') {
-        // 3. MƏHSULLAR ÜÇÜN AXTARIŞ
         const filteredProducts = products.filter(p => {
             if (p.status === 'sold') return false;
             const title = (p.mehsulTitle || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
-            const category = (p.mehsulunKateqoriyasi || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
-            
-            return title.includes(query) || category.includes(query);
+            return title.includes(query);
         });
         renderProducts(filteredProducts);
     }
@@ -1260,57 +1274,73 @@ function toggleBiznesModel() {
 function checkInventoryMatch(wishName) {
     if (!products || products.length === 0) return;
 
-    // 1. Yazını təmizləyən və standartlaşdıran daxili funksiya
+    // 1. Yazını təmizləyən və standartlaşdıran daxili funksiya (Senior Version)
     const normalize = (txt) => {
-        return txt.toLowerCase()
+        if (!txt) return "";
+        return txt.toString().toLowerCase()
             .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
             .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
             .replace(/ş/g, 's')
-            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Durğu işarələrini silir
+            // Bütün durğu işarələrini və lazımsız simvolları silirik ki, bitişik sözlər də tapılsın
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ") 
             .trim();
     };
 
-    // 2. Müştərinin istəyini sözlərə bölürük (Tokenization)
     const wishClean = normalize(wishName);
-    const wishWords = wishClean.split(/\s+/).filter(word => word.length > 1); // 1 hərfdən uzun olan sözləri götürürük
+    // Müştərinin yazdığı istəyi sözlərə bölürük (məs: "kafel", "kesen", "10sm")
+    const wishWords = wishClean.split(/\s+/).filter(word => word.length > 1);
 
-    // 3. Aktiv məhsullar arasında axtarış
+    if (wishWords.length === 0) return;
+
+    // 2. AKTİV MƏHSULLAR ARASINDA DƏRİN AXTARIŞ
     const matches = products.filter(p => {
         if (p.status === 'sold') return false;
 
-        const productTitleClean = normalize(p.mehsulTitle);
+        // Məhsulun bütün məlumatlarını bir "Search Blob" (Axtarış Yığını) halına gətiririk
+        // Başlıq + Kateqoriya + Açıqlama + Qiymət
+        const searchBlob = normalize(`
+            ${p.mehsulTitle} 
+            ${p.mehsulunKateqoriyasi} 
+            ${p.mehsulAciqlamasi || ""} 
+            ${p.mehsulQiymeti}
+        `);
 
-        // ƏSAS MƏNTİQ: Müştərinin yazdığı HƏR BİR söz məhsulun başlığında varmı?
-        // Ardıcıllıq vacib deyil!
-        return wishWords.every(word => productTitleClean.includes(word));
+        // ƏSAS STRATEGİYA: 
+        // Müştərinin yazdığı sözlərdən HƏR HANSI BİRİ (və ya hamısı) bu yığının içində varmı?
+        // Biz burada "Partial Matching" istifadə edirik.
+        
+        // Müştəri bir neçə söz yazıbsa (məs: "kafel kesen"), 
+        // onların ən azı 1-i (əgər çoxdursa 50%-i) uyğun gəlməlidir
+        const matchCount = wishWords.filter(word => searchBlob.includes(word)).length;
+        
+        // Əgər 1 söz yazıbsa, o mütləq tapılmalıdır. 
+        // Əgər çox söz yazıbsa, ən azı əsas açar sözlər tapılmalıdır.
+        return matchCount >= Math.ceil(wishWords.length * 0.5); 
     });
 
-    // 4. Əgər heç nə tapılmasa, bir az daha yumşaq axtarış edirik (Optional)
-    // Məsələn: 3 sözdən 2-si uyğun gəlsə belə göstərsin
-    let finalMatches = matches;
-    if (finalMatches.length === 0 && wishWords.length > 1) {
-        finalMatches = products.filter(p => {
-            if (p.status === 'sold') return false;
-            const productTitleClean = normalize(p.mehsulTitle);
-            const matchCount = wishWords.filter(word => productTitleClean.includes(word)).length;
-            return matchCount >= Math.ceil(wishWords.length * 0.7); // 70% uyğunluq
-        });
-    }
+    // 3. NƏTİCƏNİ EKRANA ÇIXARIRIQ
+    if (matches.length > 0) {
+        // Tapılanları qiymətə görə düzürük (büdcəyə ən yaxın olanlar yuxarı çıxa bilər)
+        matches.sort((a, b) => a.mehsulQiymeti - b.mehsulQiymeti);
 
-    // 5. Nəticəni ekrana çıxarırıq
-    if (finalMatches.length > 0) {
         let message = `🚀 MÜJDƏ! ANBARDA UYĞUNLUQ TAPILDI!\n\n`;
         message += `Siz yazdınız: "${wishName}"\n`;
-        message += `----------------------------------\n`;
+        message += `==================================\n`;
         
-        finalMatches.forEach((m, index) => {
+        matches.forEach((m, index) => {
+            // Əgər başlıqda Dostoyevski sözü yoxdursa, amma açıqlamada varsa, bunu vurğulayaq
+            const isInTitle = normalize(m.mehsulTitle).includes(normalize(wishName).split(" ")[0]);
+            
             message += `${index + 1}. ${m.mehsulTitle}\n`;
             message += `💰 Qiymət: ${m.mehsulQiymeti} ₼\n`;
-            message += `📍 Vəziyyəti: ${m.mehsulunVeziyyeti === 'yeni' ? 'Yeni' : 'İşlənmiş'}\n`;
+            message += `📍 Kateqoriya: ${m.mehsulunKateqoriyasi}\n`;
+            if (!isInTitle) {
+                message += `📝 (Məlumat açıqlama hissəsində tapıldı)\n`;
+            }
             message += `----------------------------------\n`;
         });
 
-        message += `\nMəlumatları yoxlayıb müştəri ilə əlaqə saxlaya bilərsiniz.`;
+        message += `\nMüştəri üçün bu məhsulları dərhal təklif edə bilərsiniz!`;
 
         setTimeout(() => {
             alert(message);
@@ -1318,52 +1348,118 @@ function checkInventoryMatch(wishName) {
     }
 }
 
-
 function checkWishlistForNewProduct(newProductTitle) {
     if (!wishlist || wishlist.length === 0) return;
 
-    // 1. Standartlaşdırma funksiyası
+    // 1. Yeni yüklənən məhsulun bütün məlumatlarını tapırıq (products massivindən)
+    // Çünki bizə qiymət, açıqlama və kateqoriya da lazımdır
+    const newP = products.find(p => p.mehsulTitle === newProductTitle) || { mehsulTitle: newProductTitle };
+
+    // 2. Standartlaşdırma funksiyası (Senior Version)
     const normalize = (txt) => {
-        return txt.toLowerCase()
+        if (!txt) return "";
+        return txt.toString().toLowerCase()
             .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
             .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
             .replace(/ş/g, 's')
-            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ") 
             .trim();
     };
 
-    const productClean = normalize(newProductTitle);
+    // Yeni məhsulun bütün detallarını bir "Axtarış Yığını" halına salırıq
+    const productBlob = normalize(`
+        ${newP.mehsulTitle} 
+        ${newP.mehsulunKateqoriyasi || ""} 
+        ${newP.mehsulAciqlamasi || ""}
+    `);
     
-    // 2. Yalnız "pending" (Gözləyən) statusunda olan müştəriləri yoxlayırıq
+    const productPrice = Number(newP.mehsulQiymeti) || 0;
+
+    // 3. Yalnız "pending" (Gözləyən) statusunda olan müştəriləri DƏRİN yoxlayırıq
     const potentialCustomers = wishlist.filter(wish => {
         if (wish.status !== 'pending') return false;
 
-        const wishClean = normalize(wish.product);
-        const wishWords = wishClean.split(/\s+/).filter(w => w.length > 1);
+        const wishProductNameClean = normalize(wish.product);
+        const wishWords = wishProductNameClean.split(/\s+/).filter(w => w.length > 1);
+        const wishBudget = Number(wish.budget) || 0;
 
-        // Məntiq: Müştərinin istədiyi sözlərin HAMISI yeni məhsulun adında varmı?
-        // Məsələn: Müştəri "iPhone 11" istəyir, sən "iPhone 11 Pro" əlavə edirsən -> MATCH!
-        return wishWords.every(word => productClean.includes(word));
+        // A. MƏTN UYĞUNLUĞU: Müştərinin istədiyi sözlər yeni məhsulun detallarında varmı?
+        // (Söz-söz parçalayırıq ki, "Dostoyevski" yazan müştəri "Kitab paketi (Dostoyevski)" malını tapsın)
+        const textMatch = wishWords.every(word => productBlob.includes(word));
+
+        // B. QİYMƏT UYĞUNLUĞU: Yeni məhsulun qiyməti müştərinin büdcəsinə uyğundurmu?
+        // (Burada 10% tolerans qoyuruq: müştəri 100₼ deyibsə, 110₼-lıq malı da göstərsin)
+        const priceMatch = wishBudget === 0 || productPrice <= (wishBudget * 1.1);
+
+        return textMatch && priceMatch;
     });
 
-    // 3. Əgər müştəri tapılarsa, Alert veririk
+    // 4. Əgər müştəri tapılarsa, Alert veririk
     if (potentialCustomers.length > 0) {
-        let alertMsg = `🚀 BU MƏHSULU GÖZLƏYƏN MÜŞTƏRİ VAR!\n`;
-        alertMsg += `Məhsul: "${newProductTitle}"\n`;
+        let alertMsg = `🚀 MÜJDƏ! BU MƏHSULU GÖZLƏYƏN MÜŞTƏRİLƏR VAR!\n`;
+        alertMsg += `Yeni Məhsul: "${newProductTitle}"\n`;
+        alertMsg += `Qiymət: ${productPrice} ₼\n`;
         alertMsg += `==================================\n\n`;
 
         potentialCustomers.forEach((c, index) => {
             alertMsg += `${index + 1}. 👤 Müştəri: ${c.customer}\n`;
             alertMsg += `   📞 Əlaqə: ${c.phone}\n`;
             alertMsg += `   💰 Büdcə: ${c.budget} ₼\n`;
-            alertMsg += `   📝 İstək: ${c.product}\n`;
+            alertMsg += `   📝 Müştəri nə axtarırdı: "${c.product}"\n`;
             alertMsg += `----------------------------------\n`;
         });
 
-        alertMsg += `\nElan yerləşdirməyə ehtiyac yoxdur, birbaşa zəng edin!`;
+        alertMsg += `\nHeç yerə elan qoymağa tələsməyin, dərhal bu müştərilərə zəng edin!`;
 
         setTimeout(() => {
             alert(alertMsg);
-        }, 700); // Məhsul yadda saxlanıldıqdan bir az sonra çıxsın
+        }, 800); 
     }
+}
+
+function renderWishPagination(totalItems, filteredData) {
+    const section = document.getElementById('wishlistSection');
+    if (!section) return;
+
+    let paginationContainer = document.getElementById('wishPagination');
+    if (paginationContainer) paginationContainer.remove();
+
+    if (totalItems <= wishRowsPerPage) return;
+
+    const totalPages = Math.ceil(totalItems / wishRowsPerPage);
+    paginationContainer = document.createElement('div');
+    paginationContainer.id = 'wishPagination';
+    paginationContainer.style.cssText = "display:flex; justify-content:center; gap:10px; margin-top:20px; padding:20px 0;";
+
+    // GERİ DÜYMƏSİ
+    const prevBtn = document.createElement('button');
+    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevBtn.disabled = currentWishPage === 1;
+    prevBtn.className = "btn-page"; // Stil vermək üçün
+    prevBtn.onclick = () => { currentWishPage--; renderWishlist(filteredData); };
+    paginationContainer.appendChild(prevBtn);
+
+    // SƏHİFƏ NÖMRƏLƏRİ
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.innerText = i;
+        btn.className = i === currentWishPage ? "btn-page active" : "btn-page";
+        // Aktiv düymə stili
+        if(i === currentWishPage) {
+            btn.style.background = "#3498db";
+            btn.style.color = "white";
+        }
+        btn.onclick = () => { currentWishPage = i; renderWishlist(filteredData); };
+        paginationContainer.appendChild(btn);
+    }
+
+    // İRƏLİ DÜYMƏSİ
+    const nextBtn = document.createElement('button');
+    nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextBtn.disabled = currentWishPage === totalPages;
+    nextBtn.className = "btn-page";
+    nextBtn.onclick = () => { currentWishPage++; renderWishlist(filteredData); };
+    paginationContainer.appendChild(nextBtn);
+
+    section.appendChild(paginationContainer);
 }

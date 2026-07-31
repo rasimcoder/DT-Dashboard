@@ -605,3 +605,19 @@ input, textarea, select {
 .expense-breakdown-item:last-child { border-bottom: none; }
 .exp-name { font-weight: 600; color: #444; text-transform: capitalize; }
 .exp-total { color: #e74c3c; font-weight: bold; }
+
+.btn-page {
+    border: 1px solid #ddd;
+    background: white;
+    padding: 5px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+.btn-page:hover:not(:disabled) {
+    background: #f0f0f0;
+}
+.btn-page:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

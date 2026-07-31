@@ -1,12 +1,32 @@
 [
   {
-    "id": "WISH-1785310079291",
-    "customer": "Tapazdan gelen - 1",
-    "product": "kafel kəsən lazerli 130 sm istəyən",
+    "id": "WISH-1785492226233",
+    "customer": "kafel kəsən istəyən -1",
+    "product": "kafel kəsən 130sm lazerli",
     "budget": "110",
     "phone": "077 328-02-89",
-    "note": "1-ci müştəridir.vp-da yazıb nömrəsi var",
+    "note": "lazerli 130sm kafel kesen isteyir büdcəsi 100-den bir az yuxarı",
     "status": "pending",
-    "date": "2026-07-29"
+    "date": "2026-07-31"
+  },
+  {
+    "id": "WISH-1785493428747",
+    "customer": "kafel kəsən istəyən - 2",
+    "product": "kafel kəsən 120-lik,1.20sm lazerli",
+    "budget": "110",
+    "phone": "055 683-40-74",
+    "note": "lazerli 1.20 sm - lik kafel kesen isteyen",
+    "status": "pending",
+    "date": "2026-07-31"
+  },
+  {
+    "id": "WISH-1785493510025",
+    "customer": "kafel kəsən istəyən - 3 ",
+    "product": "kafel kəsən 80-lik balaca lazersiz",
+    "budget": "100",
+    "phone": "077 342-11-42",
+    "note": "balaca lazersiz kafel kesen isteyen maksimum büdcə 100 azn-ə qədər",
+    "status": "pending",
+    "date": "2026-07-31"
   }
 ]

@@ -72,8 +72,8 @@
   },
   {
     "id": "DT-1785222232159",
-    "status": "active",
-    "satildigiTarix": null,
+    "status": "sold",
+    "satildigiTarix": "2026-07-29T14:16:38.146Z",
     "mehsulunYaradilmTarixi": "2026-07-28T07:03:52.159Z",
     "kohneQiymet": null,
     "mehsulTitle": "Kafel kəsən lazerli -130sm",
@@ -97,6 +97,6 @@
       "1785222231986-756344055_122196193958745903_1486524429479741364_n.jpg"
     ],
     "mehsulXercleri": [],
-    "satildigiYer": null
+    "satildigiYer": "Lalafo"
   }
 ]
