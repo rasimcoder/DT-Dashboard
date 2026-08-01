@@ -19,6 +19,11 @@ let expenseChartInstance = null;
 let currentWishPage = 1; // Hal-hazırda hansı səhifədəyik
 const wishRowsPerPage = 10; // Hər səhifədə neçə sətir olsun
 
+// --- YENİ ƏLAVƏ OLUNDU ---
+let currentSalesPage = 1; 
+const salesRowsPerPage = 10;
+// -------------------------
+
 // DOM Elementləri
 
 const connectBtn = document.getElementById('connectBtn');
@@ -247,11 +252,15 @@ function showSection(sectionId) {
         document.getElementById('wishlistSection').style.display = 'block';
         renderWishlist(wishlist);
     }
-    else if (sectionId === 'analytics') {
-        document.getElementById('analyticsSection').style.display = 'block';
-        populateYearFilter();
-        updateAnalytics();
-    }
+    // showSection funksiyasında analytics hissəsini belə yenilə:
+   else if (sectionId === 'analytics') {
+    currentSalesPage = 1; // Səhifəni sıfırla
+    document.getElementById('analyticsSection').style.display = 'block';
+    populateYearFilter();
+    updateAnalytics();
+}
+
+
 }
 
 // Axtarış funksiyasını hər iki bölməyə uyğunlaşdırırıq
@@ -926,17 +935,14 @@ function populateYearFilter() {
     });
 }
 
-// 2. Yenilənmiş Əsas Analitika Funksiyası (Komissiya və Satan məlumatı ilə)
 async function updateAnalytics() {
     if (!products || products.length === 0) return;
-
 
     const selectedYear = document.getElementById('filterYear').value;
     const selectedMonth = document.getElementById('filterMonth').value;
 
     let filteredSold = products.filter(p => p.status === 'sold');
 
-    // Filtrləri tətbiq edirik
     if (selectedYear !== 'all') {
         filteredSold = filteredSold.filter(p => new Date(p.satildigiTarix).getFullYear().toString() === selectedYear);
     }
@@ -944,7 +950,7 @@ async function updateAnalytics() {
         filteredSold = filteredSold.filter(p => new Date(p.satildigiTarix).getMonth().toString() === selectedMonth);
     }
 
-    // --- HESABLAMA DƏYİŞƏNLƏRİ ---
+    // --- HESABLAMA DƏYİŞƏNLƏRİ (Dəyişmədi) ---
     let realRevenue = 0;      
     let ownProductsProfit = 0; 
     let commProfitSum = 0;    
@@ -958,14 +964,12 @@ async function updateAnalytics() {
         const itemExpenses = (p.mehsulXercleri || []).reduce((sum, ex) => sum + (Number(ex.amount) || 0), 0);
         totalExtraExpenses += itemExpenses;
 
-        // Xərcləri qruplaşdırırıq
         (p.mehsulXercleri || []).forEach(ex => {
             const key = ex.title.trim().toLowerCase();
             if (!expenseGroups[key]) expenseGroups[key] = { name: ex.title.trim(), total: 0 };
             expenseGroups[key].total += Number(ex.amount);
         });
 
-        // --- MODELƏ GÖRƏ AYIRMA ---
         if (p.biznesModeli === 'commission') {
             const kProfit = Number(p.komissiyaQazanci) || 0;
             commProfitSum += kProfit;
@@ -976,7 +980,6 @@ async function updateAnalytics() {
             realRevenue += salePrice; 
         }
 
-        // Satış sürəti hesabı
         const diff = Math.ceil(Math.abs(new Date(p.satildigiTarix) - new Date(p.mehsulunYaradilmTarixi)) / (1000 * 60 * 60 * 24)) || 1;
         totalSaleDays += diff;
     });
@@ -988,7 +991,6 @@ async function updateAnalytics() {
         .filter(p => p.status !== 'sold' && p.biznesModeli !== 'commission')
         .reduce((sum, p) => sum + (Number(p.alisQiymeti) || 0), 0);
 
-    // --- EKRANA ÇIXARIŞ ---
     const setElText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
 
     setElText('statFinalProfit', finalNetProfit.toLocaleString() + " ₼");
@@ -1000,7 +1002,6 @@ async function updateAnalytics() {
     setElText('statSoldQuantity', filteredSold.length + " ədəd");
     setElText('statAvgSaleTime', avgSaleTime + " gün");
 
-    // Xərc siyahısını doldurmaq
     const expListDiv = document.getElementById('expenseBreakdownList');
     if(expListDiv) {
         expListDiv.innerHTML = Object.values(expenseGroups).sort((a,b) => b.total - a.total).map(ex => `
@@ -1010,19 +1011,29 @@ async function updateAnalytics() {
             </div>`).join('') || '<p style="color:#999; text-align:center;">Xərc yoxdur.</p>';
     }
 
-    // --- CƏDVƏLİ DOLDURMAQ (3-cü Addım: Satan sütunu ilə) ---
+    // --- CƏDVƏLİ DOLDURMAQ (SƏHİFƏLƏMƏ İLƏ YENİLƏNDİ) ---
     const tableBody = document.getElementById('salesTableBody');
     if (tableBody) {
+        const sortedSold = [...filteredSold].sort((a, b) => new Date(b.satildigiTarix) - new Date(a.satildigiTarix));
+
+        // [SƏHİFƏLƏMƏ HİSSƏSİ - START]
+        const totalItems = sortedSold.length;
+        const totalPages = Math.ceil(totalItems / salesRowsPerPage);
+        if (currentSalesPage > totalPages && totalPages > 0) currentSalesPage = totalPages;
+        if (currentSalesPage < 1) currentSalesPage = 1;
+
+        const startIndex = (currentSalesPage - 1) * salesRowsPerPage;
+        const endIndex = startIndex + salesRowsPerPage;
+        const paginatedSales = sortedSold.slice(startIndex, endIndex);
+        // [SƏHİFƏLƏMƏ HİSSƏSİ - END]
+
         tableBody.innerHTML = '';
-        [...filteredSold].sort((a, b) => new Date(b.satildigiTarix) - new Date(a.satildigiTarix)).slice(0, 20).forEach(p => {
+        paginatedSales.forEach(p => {
             const isComm = p.biznesModeli === 'commission';
-            
-            // Qazancın hesablanması
             const profit = isComm 
                 ? (Number(p.komissiyaQazanci) || 0) 
                 : (Number(p.mehsulQiymeti) - (Number(p.alisQiymeti) + (p.mehsulXercleri || []).reduce((s, e) => s + Number(e.amount), 0)));
             
-            // Sürət hesabı
             const entryDate = new Date(p.mehsulunYaradilmTarixi);
             const saleDate = new Date(p.satildigiTarix);
             const days = Math.ceil(Math.abs(saleDate - entryDate) / (1000 * 60 * 60 * 24)) || 1;
@@ -1044,6 +1055,9 @@ async function updateAnalytics() {
                     <td class="${speedClass}">${days} gün</td>
                 </tr>`;
         });
+
+        // [DÜYMƏLƏRİ ÇAĞIRAN HİSSƏ]
+        renderSalesPagination(totalItems); 
     }
 
     initCharts(filteredSold, expenseGroups);
@@ -1462,4 +1476,47 @@ function renderWishPagination(totalItems, filteredData) {
     paginationContainer.appendChild(nextBtn);
 
     section.appendChild(paginationContainer);
+}
+
+
+
+// --- YENİ FUNKSİYA ---
+function renderSalesPagination(totalItems) {
+    const tableContainer = document.querySelector('.recent-sales'); // Cədvəlin olduğu qutu
+    if (!tableContainer) return;
+
+    let paginationContainer = document.getElementById('salesPagination');
+    if (paginationContainer) paginationContainer.remove();
+
+    if (totalItems <= salesRowsPerPage) return;
+
+    const totalPages = Math.ceil(totalItems / salesRowsPerPage);
+    paginationContainer = document.createElement('div');
+    paginationContainer.id = 'salesPagination';
+    paginationContainer.className = 'pagination-controls'; // Gözləmə siyahısı ilə eyni CSS istifadə edəcək
+
+    // GERİ
+    const prevBtn = document.createElement('button');
+    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevBtn.disabled = currentSalesPage === 1;
+    prevBtn.onclick = () => { currentSalesPage--; updateAnalytics(); };
+    paginationContainer.appendChild(prevBtn);
+
+    // NÖMRƏLƏR
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.innerText = i;
+        if (i === currentSalesPage) btn.className = 'active';
+        btn.onclick = () => { currentSalesPage = i; updateAnalytics(); };
+        paginationContainer.appendChild(btn);
+    }
+
+    // İRƏLİ
+    const nextBtn = document.createElement('button');
+    nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextBtn.disabled = currentSalesPage === totalPages;
+    nextBtn.onclick = () => { currentSalesPage++; updateAnalytics(); };
+    paginationContainer.appendChild(nextBtn);
+
+    tableContainer.appendChild(paginationContainer);
 }

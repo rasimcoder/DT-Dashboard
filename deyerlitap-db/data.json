@@ -5,8 +5,8 @@
     "satildigiTarix": null,
     "mehsulTitle": "Maraqlı kitab paketi (Dostoyevski, Brian Tracy və s.)",
     "mehsulAciqlamasi": "Məhsul: 4 Kitab Bir Paketdə\nQiymət: 20 AZN (Dəst halında)\nVəziyyəti: Yeni kimidir, çox səliqəli saxlanılıb.\nKitabxananızı zənginləşdirmək üçün seçilmiş, oxunmamış 4 möhtəşəm əsəri tək paketdə təqdim edirik. Həm şəxsi inkişaf, həm klassika, həm də detektiv sevənlər üçün əla fürsətdir.\nPaketə daxildir:\nFyodor Dostoyevski (2 Cild): \"Cinayət və Cəza\" və \"İdiot\". Dünya ədəbiyyatı klassikləri seriyasından.\nBrian Tracy - \"Milyon Dollarlıq Vərdişlər\": Gəlirlərinizi artırmaq üçün biznes bələdçisi.\nÇingiz Abdullayev - \"Qırılmış Əlaqə\": Maraqlı və həyəcan dolu detektiv əsəri.",
-    "mehsulQiymeti": "20",
-    "alisQiymeti": "0",
+    "mehsulQiymeti": 20,
+    "alisQiymeti": 0,
     "mehsulunKateqoriyasi": "Kitablar",
     "mehsulunVeziyyeti": "islenmis",
     "labels": [
@@ -31,14 +31,17 @@
       "1784642450990-WhatsApp_Image_2026-07-04_at_20.02.53_(1).jpeg"
     ],
     "mehsulunYaradilmTarixi": "7/21/2026, 5:59:14 PM",
-    "kohneQiymet": "25",
+    "kohneQiymet": "20",
     "satildigiYer": null,
     "mehsulXercleri": [
       {
         "title": "yol pulu",
         "amount": 5
       }
-    ]
+    ],
+    "biznesModeli": "own",
+    "komissiyaQazanci": 0,
+    "malSahibi": ""
   },
   {
     "id": "DT-1784642801301",
