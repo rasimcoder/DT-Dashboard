@@ -20,7 +20,7 @@ let currentWishPage = 1; // Hal-hazırda hansı səhifədəyik
 const wishRowsPerPage = 10; // Hər səhifədə neçə sətir olsun
 
 // --- YENİ ƏLAVƏ OLUNDU ---
-let currentSalesPage = 1; 
+let currentSalesPage = 1;
 const salesRowsPerPage = 10;
 // -------------------------
 
@@ -90,7 +90,7 @@ async function saveData() {
         const wishWritable = await wishHandle.createWritable();
         await wishWritable.write(JSON.stringify(wishlist, null, 2));
         await wishWritable.close();
-        
+
         console.log("Bütün məlumatlar E: diskinə yazıldı.");
     } catch (err) { console.error("Yadda saxlama xətası:", err); }
 }
@@ -104,13 +104,13 @@ async function saveData() {
 // WISH-LIST (GÖZLƏMƏ SİYAHISI) - UPDATE & DELETE
 // ==========================================
 
-function openWishlistModal() { 
-    document.getElementById('wishlistModal').style.display = 'block'; 
+function openWishlistModal() {
+    document.getElementById('wishlistModal').style.display = 'block';
     document.getElementById('wishlistForm').reset();
     document.getElementById('editWishId').value = ""; // ID-ni sıfırla (yeni əlavə üçün)
 }
 
-function closeWishlistModal() { 
+function closeWishlistModal() {
     document.getElementById('wishlistModal').style.display = 'none';
 }
 
@@ -136,7 +136,7 @@ document.getElementById('wishlistForm').onsubmit = async (e) => {
 
     const editId = document.getElementById('editWishId').value;
     const wishProductName = document.getElementById('wishProduct').value; // Müştərinin yazdığı məhsul
-    
+
     const wishData = {
         customer: document.getElementById('wishCustomer').value,
         product: wishProductName,
@@ -162,16 +162,16 @@ document.getElementById('wishlistForm').onsubmit = async (e) => {
 
     // 1. ANBARDA MƏHSULUN OLUB-OLMADIĞINI YOXLAYIRIQ (Addım 2-dəki funksiya)
     // Redaktə yox, yalnız yeni əlavə ediləndə yoxlasın
-    if (!editId) { 
+    if (!editId) {
         checkInventoryMatch(wishProductName);
     }
 
     // 2. Məlumatı bazaya yazırıq
     await saveData();
-    
+
     // 3. Səhifələmə ilə birgə cədvəli yeniləyirik
-    renderWishlist(); 
-    
+    renderWishlist();
+
     // 4. Modalı bağlayırıq (Formu sıfırlayır)
     closeWishlistModal();
 };
@@ -180,7 +180,7 @@ document.getElementById('wishlistForm').onsubmit = async (e) => {
 function renderWishlist(dataToDisplay = wishlist) {
     const body = document.getElementById('wishlistBody');
     if (!body) return;
-    
+
     // --- SƏHİFƏLƏMƏ (PAGINATION) MƏNTİQİ ---
     const totalItems = dataToDisplay.length;
     const totalPages = Math.ceil(totalItems / wishRowsPerPage);
@@ -223,7 +223,7 @@ function renderWishlist(dataToDisplay = wishlist) {
 
 // 4. SİLMƏ FUNKSİYASI
 async function deleteWish(id) {
-    if(confirm("Bu müştəri istəyini siyahıdan tamamilə silmək istəyirsiniz?")) {
+    if (confirm("Bu müştəri istəyini siyahıdan tamamilə silmək istəyirsiniz?")) {
         wishlist = wishlist.filter(x => x.id !== id);
         await saveData();
         renderWishlist(); // Səhifələmə daxildə avtomatik tənzimlənəcək
@@ -246,24 +246,24 @@ function showSection(sectionId) {
     if (sectionId === 'home') {
         document.getElementById('productGrid').style.display = 'grid';
         renderProducts(products.filter(p => p.status !== 'sold'));
-    } 
+    }
     else if (sectionId === 'wishlist') {
         currentWishPage = 1; // Səhifəyə girişi 1-dən başla
         document.getElementById('wishlistSection').style.display = 'block';
         renderWishlist(wishlist);
     }
     // showSection funksiyasında analytics hissəsini belə yenilə:
-   else if (sectionId === 'analytics') {
-    currentSalesPage = 1; // Səhifəni sıfırla
-    document.getElementById('analyticsSection').style.display = 'block';
-    populateYearFilter();
-    updateAnalytics();
-}
+    else if (sectionId === 'analytics') {
+        currentSalesPage = 1; // Səhifəni sıfırla
+        document.getElementById('analyticsSection').style.display = 'block';
+        populateYearFilter();
+        updateAnalytics();
+    }
 
 
 }
 
-// Axtarış funksiyasını hər iki bölməyə uyğunlaşdırırıq
+// Axtarış funksiyasını hər iki bölməyə uyğunlaşdırırıq handleSearch
 function handleSearch() {
     const sInput = document.getElementById('searchInput');
     if (!sInput) return;
@@ -274,15 +274,11 @@ function handleSearch() {
         .replace(/ş/g, 's').trim();
 
     if (currentActiveSection === 'wishlist') {
-        currentWishPage = 1; // Axtarış zamanı səhifəni sıfırla
+        currentWishPage = 1;
         const filteredWishes = wishlist.filter(item => {
             const customer = (item.customer || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
             const product = (item.product || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
-            const phone = (item.phone || "").toLowerCase();
-            const budget = (item.budget || "").toString();
-            const statusText = item.status === 'pending' ? 'gozleyir' : 'tamamlandi';
-
-            return customer.includes(query) || product.includes(query) || phone.includes(query) || budget.includes(query) || statusText.includes(query);
+            return customer.includes(query) || product.includes(query);
         });
         renderWishlist(filteredWishes);
     } 
@@ -294,7 +290,21 @@ function handleSearch() {
         });
         renderProducts(filteredProducts);
     }
+    else if (currentActiveSection === 'analytics') {
+        currentSalesPage = 1; 
+        updateAnalytics();
+    }
+    // --- YENİ ƏLAVƏ: SATILANLAR BÖLMƏSİNDƏ AXTARIŞ ---
+    else if (currentActiveSection === 'sold') {
+        const filteredSold = products.filter(p => {
+            if (p.status !== 'sold') return false; // Yalnız satılanları axtar
+            const title = (p.mehsulTitle || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            return title.includes(query);
+        });
+        renderProducts(filteredSold);
+    }
 }
+
 
 // ==========================================
 // 4. MƏHSUL ƏLAVƏ EDƏNDƏ WISH-LIST-LƏ YOXLAMA
@@ -302,7 +312,7 @@ function handleSearch() {
 // Bu funksiyanı məhsul formunun sonunda çağırmalısan
 function checkWishlistMatch(productTitle) {
     const normalizedProduct = productTitle.toLowerCase();
-    const match = wishlist.find(w => 
+    const match = wishlist.find(w =>
         w.status === 'pending' && normalizedProduct.includes(w.product.toLowerCase())
     );
 
@@ -323,9 +333,144 @@ function toggleCategories() {
     menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
 }
 
-// Qeyd: Sənin digər funksiyaların (renderProducts, updateAnalytics, openModal və s.) 
-// olduğu kimi qalır, çünki showSection və saveData onları dəstəkləyir.
+// Qeyd: Sənin digər funksiyaların  updateAnalytics
+async function updateAnalytics() {
+    if (!products || products.length === 0) return;
 
+    // 1. Filtrləri Götür
+    const selectedYear = document.getElementById('filterYear').value;
+    const selectedMonth = document.getElementById('filterMonth').value;
+    const sInput = document.getElementById('searchInput');
+    
+    const query = sInput ? sInput.value.toLowerCase()
+        .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
+        .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
+        .replace(/ş/g, 's').trim() : "";
+
+    // 2. Satılanları süz
+    let filteredSold = products.filter(p => p.status === 'sold');
+
+    if (selectedYear !== 'all') {
+        filteredSold = filteredSold.filter(p => new Date(p.satildigiTarix).getFullYear().toString() === selectedYear);
+    }
+    if (selectedMonth !== 'all') {
+        filteredSold = filteredSold.filter(p => new Date(p.satildigiTarix).getMonth().toString() === selectedMonth);
+    }
+
+    if (query !== "") {
+        filteredSold = filteredSold.filter(p => {
+            const title = (p.mehsulTitle || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            const owner = (p.malSahibi || "").toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
+            return title.includes(query) || owner.includes(query);
+        });
+    }
+
+    // 3. HESABLAMALAR
+    let realRevenue = 0;      
+    let ownProductsProfit = 0; 
+    let commProfitSum = 0;    
+    let totalExtraExpenses = 0; 
+    let totalSaleDays = 0;
+    const expenseGroups = {}; 
+
+    filteredSold.forEach(p => {
+        const salePrice = Number(p.mehsulQiymeti) || 0;
+        const baseCost = Number(p.alisQiymeti) || 0;
+        
+        // Bu məhsula aid olan xərcləri cəmləyirik
+        const itemExpenses = (p.mehsulXercleri || []).reduce((sum, ex) => sum + (Number(ex.amount) || 0), 0);
+        totalExtraExpenses += itemExpenses;
+
+        // Xərcləri qruplaşdırırıq (Xərc detalları siyahısı üçün)
+        (p.mehsulXercleri || []).forEach(ex => {
+            const key = ex.title.trim().toLowerCase();
+            if (!expenseGroups[key]) expenseGroups[key] = { name: ex.title.trim(), total: 0 };
+            expenseGroups[key].total += Number(ex.amount);
+        });
+
+        // BİZNES MODELİNƏ GÖRƏ QAZANC HESABI
+        if (p.biznesModeli === 'commission') {
+            const kProfit = Number(p.komissiyaQazanci) || 0;
+            commProfitSum += kProfit;
+            realRevenue += kProfit; // Vasitəçidə dövriyyə yalnız qazancımızdır
+        } else {
+            const itemProfit = salePrice - (baseCost + itemExpenses);
+            ownProductsProfit += itemProfit;
+            realRevenue += salePrice; 
+        }
+
+        // Satış sürəti hesabı
+        const diff = Math.ceil(Math.abs(new Date(p.satildigiTarix) - new Date(p.mehsulunYaradilmTarixi)) / (1000 * 60 * 60 * 24)) || 1;
+        totalSaleDays += diff;
+    });
+
+    // Hal-hazırda anbarda olanların mayası (Yalnız mənə məxsus mallar)
+    const stockValue = products
+        .filter(p => p.status !== 'sold' && p.biznesModeli !== 'commission')
+        .reduce((sum, p) => sum + (Number(p.alisQiymeti) || 0), 0);
+
+    const finalNetProfit = ownProductsProfit + commProfitSum;
+    const avgSaleTime = filteredSold.length > 0 ? Math.round(totalSaleDays / filteredSold.length) : 0;
+
+    // 4. EKRANA ÇIXARIŞ (BÜTÜN KARTLAR)
+    const setElText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+
+    setElText('statFinalProfit', finalNetProfit.toLocaleString() + " ₼");
+    setElText('statOwnProfit', ownProductsProfit.toLocaleString() + " ₼");
+    setElText('statCommProfit', commProfitSum.toLocaleString() + " ₼");
+    setElText('statTotalRevenue', realRevenue.toLocaleString() + " ₼");
+    setElText('statTotalExpenses', totalExtraExpenses.toLocaleString() + " ₼");
+    setElText('statStockValue', stockValue.toLocaleString() + " ₼");
+    setElText('statSoldQuantity', filteredSold.length + " ədəd");
+    setElText('statAvgSaleTime', avgSaleTime + " gün");
+
+    // Xərc siyahısı renderi
+    const expListDiv = document.getElementById('expenseBreakdownList');
+    if(expListDiv) {
+        expListDiv.innerHTML = Object.values(expenseGroups).sort((a,b) => b.total - a.total).map(ex => `
+            <div class="expense-breakdown-item">
+                <span class="exp-name">${ex.name}</span>
+                <span class="exp-total">${ex.total.toLocaleString()} ₼</span>
+            </div>`).join('') || '<p style="color:#999; text-align:center;">Xərc yoxdur.</p>';
+    }
+
+    // 5. CƏDVƏL RENDERİ
+    const tableBody = document.getElementById('salesTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = '';
+        const sortedSold = [...filteredSold].sort((a, b) => new Date(b.satildigiTarix) - new Date(a.satildigiTarix));
+
+        // Səhifələmə
+        const totalItems = sortedSold.length;
+        const totalPages = Math.ceil(totalItems / salesRowsPerPage);
+        if (currentSalesPage > totalPages && totalPages > 0) currentSalesPage = totalPages;
+        const startIndex = (currentSalesPage - 1) * salesRowsPerPage;
+        const paginatedSales = sortedSold.slice(startIndex, startIndex + salesRowsPerPage);
+
+        paginatedSales.forEach(p => {
+            const isComm = p.biznesModeli === 'commission';
+            const profit = isComm 
+                ? (Number(p.komissiyaQazanci) || 0) 
+                : (Number(p.mehsulQiymeti) - (Number(p.alisQiymeti) + (p.mehsulXercleri || []).reduce((s, e) => s + Number(e.amount), 0)));
+            
+            const days = Math.ceil(Math.abs(new Date(p.satildigiTarix) - new Date(p.mehsulunYaradilmTarixi)) / (1000 * 60 * 60 * 24)) || 1;
+
+            tableBody.innerHTML += `
+                <tr>
+                    <td><strong>${p.mehsulTitle}</strong>${isComm ? '<br><small style="color:#3498db; font-size:10px;">Vasitəçilik</small>' : ''}</td>
+                    <td>${p.malSahibi || '-'}</td>
+                    <td>${new Date(p.satildigiTarix).toLocaleDateString('az-AZ')}</td>
+                    <td>${isComm ? '-' : p.alisQiymeti + ' ₼'}</td>
+                    <td>${p.mehsulQiymeti} ₼</td>
+                    <td class="profit-text">+${profit.toLocaleString()} ₼</td>
+                    <td class="${days <= 10 ? 'speed-fast' : (days <= 30 ? 'speed-normal' : 'speed-slow')}">${days} gün</td>
+                </tr>`;
+        });
+        renderSalesPagination(totalItems); 
+    }
+
+    initCharts(filteredSold, expenseGroups);
+}
 
 
 
@@ -376,7 +521,7 @@ document.getElementById('productForm').onsubmit = async (e) => {
 
     try {
         const editId = document.getElementById('editProductId').value;
-        const currentTitle = document.getElementById('title').value; 
+        const currentTitle = document.getElementById('title').value;
         const newPrice = Number(document.getElementById('salePrice').value) || 0;
 
         // --- BİZNES MODELİ HESABLAMASI (3-CÜ ADDIM) ---
@@ -445,7 +590,7 @@ document.getElementById('productForm').onsubmit = async (e) => {
         // 3. Bazaya yazırıq
         await saveData();
 
-         // Əgər bu redaktə deyil, YENİ məhsuldursa yoxlasın
+        // Əgər bu redaktə deyil, YENİ məhsuldursa yoxlasın
         const newEditId = document.getElementById('editProductId').value;
         if (!newEditId) {
             checkWishlistForNewProduct(currentTitle);
@@ -466,11 +611,11 @@ document.getElementById('productForm').onsubmit = async (e) => {
         document.getElementById('imagePreview').innerHTML = '';
         const expContainer = document.getElementById('expenseContainer');
         if (expContainer) expContainer.innerHTML = '';
-        
+
         // Komissiya sahələrini də təmizləyək və gizlədək
-        if(typeof toggleBiznesModel === 'function') {
+        if (typeof toggleBiznesModel === 'function') {
             document.querySelector('input[value="own"]').checked = true;
-            toggleBiznesModel(); 
+            toggleBiznesModel();
         }
 
         selectedFiles = [];
@@ -491,7 +636,7 @@ async function renderProducts(data) {
     // Sənin istədiyin təhlükəsizlik yoxlaması və təmizləmə hissəsi
     const grid = document.getElementById('productGrid');
     if (!grid) return;
-    
+
     grid.innerHTML = ''; // Köhnə kartları tam təmizləyirik (Çoxalmanın qarşısını alır)
 
     // Əgər göstəriləcək məlumat yoxdursa
@@ -608,39 +753,6 @@ async function editPrice(id) {
     }
 }
 
-// 9. AXTARIŞ SİSTEMİ
-function handleSearch() {
-    const sInput = document.getElementById('searchInput');
-    if (!sInput) return;
-
-    // Axtarılan sözü kiçik hərflərə salırıq (Azərbaycan hərfləri daxil)
-    const query = sInput.value.toLowerCase()
-        .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
-        .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
-        .replace(/ş/g, 's').trim();
-
-    console.log("Axtarış edilir: ", query, "Səhifə: ", currentActiveSection);
-
-    // MƏNTİQ BURADADIR:
-    if (currentActiveSection === 'wishlist') {
-        // 1. Əgər Wishlist səhifəsindəyiksə:
-        const filteredWishes = wishlist.filter(item => {
-            const customer = item.customer.toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
-            const product = item.product.toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
-            return customer.includes(query) || product.includes(query);
-        });
-        renderWishlist(filteredWishes); // Tapılanları Wishlist cədvəlinə göndər
-    } 
-    else if (currentActiveSection === 'home') {
-        // 2. Əgər Ana Səhifədəyiksə:
-        const filteredProducts = products.filter(p => {
-            if (p.status === 'sold') return false; // Satılanları axtarma
-            const title = p.mehsulTitle.toLowerCase().replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c').replace(/ş/g, 's');
-            return title.includes(query);
-        });
-        renderProducts(filteredProducts); // Tapılanları Məhsul Grid-inə göndər
-    }
-}
 
 
 // 10. DRAG & DROP İDARƏETMƏSİ
@@ -782,11 +894,68 @@ function toggleCategories() {
     const menu = document.getElementById('categoryMenu');
     menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
 }
-function filterByCategory(cat) {
-    if (cat === 'all') renderProducts(products);
-    else renderProducts(products.filter(p => p.mehsulunKateqoriyasi === cat));
-}
 
+
+function filterByCategory(cat) {
+    console.log("Seçilən kateqoriya:", cat);
+    
+    // 1. UI Hazırlığı
+    currentActiveSection = 'home';
+    document.getElementById('analyticsSection').style.display = 'none';
+    document.getElementById('wishlistSection').style.display = 'none';
+    if (document.getElementById('productDetailView')) document.getElementById('productDetailView').style.display = 'none';
+    
+    const grid = document.getElementById('productGrid');
+    grid.style.display = 'grid';
+
+    // 2. Hamısını göstər
+    if (cat === 'all' || cat === 'Bütün Məhsullar') {
+        renderProducts(products.filter(p => p.status !== 'sold'));
+        return;
+    }
+
+    // 3. Normalizasiya funksiyası
+    const normalize = (txt) => {
+        if (!txt) return "";
+        return txt.toString().toLowerCase()
+            .replace(/i̇/g, 'i').replace(/ı/g, 'i').replace(/ə/g, 'e')
+            .replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ğ/g, 'g')
+            .replace(/ç/g, 'c').replace(/ş/g, 's')
+            .replace(/\s+/g, '');
+    };
+
+    // 4. Kliklənən menyunu sözlərə böl (Tokenize)
+    const searchTokens = cat.toLowerCase()
+        .replace(/ və /g, ' ')
+        .split(/[\s,]+/)
+        .filter(w => w.length > 2)
+        .map(w => normalize(w));
+
+    // 5. Məhsulları süz
+    const filtered = products.filter(p => {
+        if (p.status === 'sold') return false;
+
+        const productCat = normalize(p.mehsulunKateqoriyasi);
+        const productTitle = normalize(p.mehsulTitle);
+
+        // Əgər kliklənən sözlərdən hər hansı biri kateqoriyada VƏ YA başlıqda varsa göstər
+        return searchTokens.some(token => 
+            productCat.includes(token) || 
+            productTitle.includes(token) ||
+            token.includes(productCat)
+        );
+    });
+
+    console.log("Tapılan nəticə sayı:", filtered.length);
+    renderProducts(filtered);
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div class="welcome-msg" style="grid-column:1/-1; text-align:center;">"${cat}" üçün uyğun aktiv məhsul tapılmadı.</div>`;
+    }
+
+    const menu = document.getElementById('categoryMenu');
+    if (menu) menu.style.display = 'none';
+}
 
 async function showProductDetail(id) {
     const p = products.find(x => x.id === id);
@@ -801,7 +970,7 @@ async function showProductDetail(id) {
     document.getElementById('detailCost').innerText = p.alisQiymeti;
     document.getElementById('detailDescText').innerText = p.mehsulAciqlamasi;
 
-   // --- STOCK AGING MƏNTİQİ (YENİLƏNDİ) ---
+    // --- STOCK AGING MƏNTİQİ (YENİLƏNDİ) ---
     let agingInfo = document.getElementById('detailAgingInfo');
     if (!agingInfo) {
         agingInfo = document.createElement('div');
@@ -857,7 +1026,7 @@ async function toggleSoldStatus(id) {
         products[index].status = 'active';
         products[index].satildigiTarix = null;
         products[index].satildigiYer = null;
-        
+
         await saveData();
         // Səhifəni təmiz şəkildə yenidən yükləyirik
         showSection(currentActiveSection);
@@ -883,7 +1052,7 @@ async function confirmSaleWithPlatform(platform) {
 
         await saveData();
         closePlatformModal();
-        
+
         // Ekranda çoxalma olmasın deyə birbaşa bölməni yeniləyirik
         showSection(currentActiveSection);
     }
@@ -891,20 +1060,23 @@ async function confirmSaleWithPlatform(platform) {
 
 // 2. Satılanları süzmək üçün filtr funksiyası
 function filterByStatus(status) {
-    // 1. Əgər analitika və ya detal bölməsi açıqdırsa, onları bağla və ana səhifəni aç
+    // --- YENİ ƏLAVƏ: Cari bölməni 'sold' olaraq qeyd edirik ---
+    currentActiveSection = status; 
+    
+    // 1. Əgər analitika və ya detal bölməsi açıqdırsa, onları bağla
     document.getElementById('analyticsSection').style.display = 'none';
     if (document.getElementById('productDetailView')) document.getElementById('productDetailView').style.display = 'none';
     document.getElementById('productGrid').style.display = 'grid';
 
-    // 2. Məhsulları süz
+    // 2. Məhsulları süz (status 'sold' olanlar)
     const filtered = products.filter(p => p.status === status);
     renderProducts(filtered);
 
-    // 3. Sidebar-dakı aktivlik vizualını idarə et
+    // 3. Sidebar vizualı
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-
-    // Kliklənən düyməni (Satılanlar) aktiv rəngə boya (isteğe bağlı)
-    // Əgər event-dən gələn elementi tapa bilsək daha yaxşı olar, amma hələlik belə bəsdir.
+    
+    // Axtarış qutusunu təmizləyirik ki, yeni axtarışa hazır olsun
+    document.getElementById('searchInput').value = '';
 }
 
 
@@ -935,133 +1107,6 @@ function populateYearFilter() {
     });
 }
 
-async function updateAnalytics() {
-    if (!products || products.length === 0) return;
-
-    const selectedYear = document.getElementById('filterYear').value;
-    const selectedMonth = document.getElementById('filterMonth').value;
-
-    let filteredSold = products.filter(p => p.status === 'sold');
-
-    if (selectedYear !== 'all') {
-        filteredSold = filteredSold.filter(p => new Date(p.satildigiTarix).getFullYear().toString() === selectedYear);
-    }
-    if (selectedMonth !== 'all') {
-        filteredSold = filteredSold.filter(p => new Date(p.satildigiTarix).getMonth().toString() === selectedMonth);
-    }
-
-    // --- HESABLAMA DƏYİŞƏNLƏRİ (Dəyişmədi) ---
-    let realRevenue = 0;      
-    let ownProductsProfit = 0; 
-    let commProfitSum = 0;    
-    let totalExtraExpenses = 0; 
-    let totalSaleDays = 0;
-    const expenseGroups = {}; 
-
-    filteredSold.forEach(p => {
-        const salePrice = Number(p.mehsulQiymeti) || 0;
-        const baseCost = Number(p.alisQiymeti) || 0;
-        const itemExpenses = (p.mehsulXercleri || []).reduce((sum, ex) => sum + (Number(ex.amount) || 0), 0);
-        totalExtraExpenses += itemExpenses;
-
-        (p.mehsulXercleri || []).forEach(ex => {
-            const key = ex.title.trim().toLowerCase();
-            if (!expenseGroups[key]) expenseGroups[key] = { name: ex.title.trim(), total: 0 };
-            expenseGroups[key].total += Number(ex.amount);
-        });
-
-        if (p.biznesModeli === 'commission') {
-            const kProfit = Number(p.komissiyaQazanci) || 0;
-            commProfitSum += kProfit;
-            realRevenue += kProfit; 
-        } else {
-            const itemProfit = salePrice - (baseCost + itemExpenses);
-            ownProductsProfit += itemProfit;
-            realRevenue += salePrice; 
-        }
-
-        const diff = Math.ceil(Math.abs(new Date(p.satildigiTarix) - new Date(p.mehsulunYaradilmTarixi)) / (1000 * 60 * 60 * 24)) || 1;
-        totalSaleDays += diff;
-    });
-
-    const finalNetProfit = ownProductsProfit + commProfitSum;
-    const avgSaleTime = filteredSold.length > 0 ? Math.round(totalSaleDays / filteredSold.length) : 0;
-    
-    const stockValue = products
-        .filter(p => p.status !== 'sold' && p.biznesModeli !== 'commission')
-        .reduce((sum, p) => sum + (Number(p.alisQiymeti) || 0), 0);
-
-    const setElText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
-
-    setElText('statFinalProfit', finalNetProfit.toLocaleString() + " ₼");
-    setElText('statOwnProfit', ownProductsProfit.toLocaleString() + " ₼");
-    setElText('statCommProfit', commProfitSum.toLocaleString() + " ₼");
-    setElText('statTotalRevenue', realRevenue.toLocaleString() + " ₼");
-    setElText('statTotalExpenses', totalExtraExpenses.toLocaleString() + " ₼");
-    setElText('statStockValue', stockValue.toLocaleString() + " ₼");
-    setElText('statSoldQuantity', filteredSold.length + " ədəd");
-    setElText('statAvgSaleTime', avgSaleTime + " gün");
-
-    const expListDiv = document.getElementById('expenseBreakdownList');
-    if(expListDiv) {
-        expListDiv.innerHTML = Object.values(expenseGroups).sort((a,b) => b.total - a.total).map(ex => `
-            <div class="expense-breakdown-item">
-                <span class="exp-name">${ex.name}</span>
-                <span class="exp-total">${ex.total.toLocaleString()} ₼</span>
-            </div>`).join('') || '<p style="color:#999; text-align:center;">Xərc yoxdur.</p>';
-    }
-
-    // --- CƏDVƏLİ DOLDURMAQ (SƏHİFƏLƏMƏ İLƏ YENİLƏNDİ) ---
-    const tableBody = document.getElementById('salesTableBody');
-    if (tableBody) {
-        const sortedSold = [...filteredSold].sort((a, b) => new Date(b.satildigiTarix) - new Date(a.satildigiTarix));
-
-        // [SƏHİFƏLƏMƏ HİSSƏSİ - START]
-        const totalItems = sortedSold.length;
-        const totalPages = Math.ceil(totalItems / salesRowsPerPage);
-        if (currentSalesPage > totalPages && totalPages > 0) currentSalesPage = totalPages;
-        if (currentSalesPage < 1) currentSalesPage = 1;
-
-        const startIndex = (currentSalesPage - 1) * salesRowsPerPage;
-        const endIndex = startIndex + salesRowsPerPage;
-        const paginatedSales = sortedSold.slice(startIndex, endIndex);
-        // [SƏHİFƏLƏMƏ HİSSƏSİ - END]
-
-        tableBody.innerHTML = '';
-        paginatedSales.forEach(p => {
-            const isComm = p.biznesModeli === 'commission';
-            const profit = isComm 
-                ? (Number(p.komissiyaQazanci) || 0) 
-                : (Number(p.mehsulQiymeti) - (Number(p.alisQiymeti) + (p.mehsulXercleri || []).reduce((s, e) => s + Number(e.amount), 0)));
-            
-            const entryDate = new Date(p.mehsulunYaradilmTarixi);
-            const saleDate = new Date(p.satildigiTarix);
-            const days = Math.ceil(Math.abs(saleDate - entryDate) / (1000 * 60 * 60 * 24)) || 1;
-            const speedClass = days <= 10 ? 'speed-fast' : (days <= 30 ? 'speed-normal' : 'speed-slow');
-
-            tableBody.innerHTML += `
-                <tr>
-                    <td>
-                        <strong>${p.mehsulTitle}</strong>
-                        ${isComm ? '<br><small style="color:#3498db; font-size:10px;"><i class="fas fa-handshake"></i> Vasitəçilik</small>' : ''}
-                    </td>
-                    <td style="font-size: 13px; color: #2c3e50;">
-                        ${p.malSahibi ? `<i class="fas fa-user-tag" style="font-size: 10px; color:#999"></i> ${p.malSahibi}` : '-'}
-                    </td>
-                    <td>${new Date(p.satildigiTarix).toLocaleDateString('az-AZ')}</td>
-                    <td>${isComm ? '-' : p.alisQiymeti + ' ₼'}</td>
-                    <td>${p.mehsulQiymeti} ₼</td>
-                    <td class="profit-text">+${profit.toLocaleString()} ₼</td>
-                    <td class="${speedClass}">${days} gün</td>
-                </tr>`;
-        });
-
-        // [DÜYMƏLƏRİ ÇAĞIRAN HİSSƏ]
-        renderSalesPagination(totalItems); 
-    }
-
-    initCharts(filteredSold, expenseGroups);
-}
 
 
 
@@ -1069,7 +1114,7 @@ async function updateAnalytics() {
 // initCharts(filteredSold, expenseGroups);
 
 //     const netProfit = totalRevenue - totalCostOfSold;
-    
+
 //     // Ortalama satış müddəti
 //     const avgSaleTime = filteredSold.length > 0 ? Math.round(totalSaleDays / filteredSold.length) : 0;
 
@@ -1106,7 +1151,7 @@ async function updateAnalytics() {
 //             const entryDate = new Date(p.mehsulunYaradilmTarixi);
 //             const saleDate = new Date(p.satildigiTarix);
 //             const diffDays = Math.ceil(Math.abs(saleDate - entryDate) / (1000 * 60 * 60 * 24)) || 1;
-            
+
 //             // Sürətə görə rəng sinfi təyin edirik
 //             let speedClass = diffDays <= 10 ? 'speed-fast' : (diffDays <= 30 ? 'speed-normal' : 'speed-slow');
 
@@ -1296,7 +1341,7 @@ function checkInventoryMatch(wishName) {
             .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
             .replace(/ş/g, 's')
             // Bütün durğu işarələrini və lazımsız simvolları silirik ki, bitişik sözlər də tapılsın
-            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ") 
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ")
             .trim();
     };
 
@@ -1322,14 +1367,14 @@ function checkInventoryMatch(wishName) {
         // ƏSAS STRATEGİYA: 
         // Müştərinin yazdığı sözlərdən HƏR HANSI BİRİ (və ya hamısı) bu yığının içində varmı?
         // Biz burada "Partial Matching" istifadə edirik.
-        
+
         // Müştəri bir neçə söz yazıbsa (məs: "kafel kesen"), 
         // onların ən azı 1-i (əgər çoxdursa 50%-i) uyğun gəlməlidir
         const matchCount = wishWords.filter(word => searchBlob.includes(word)).length;
-        
+
         // Əgər 1 söz yazıbsa, o mütləq tapılmalıdır. 
         // Əgər çox söz yazıbsa, ən azı əsas açar sözlər tapılmalıdır.
-        return matchCount >= Math.ceil(wishWords.length * 0.5); 
+        return matchCount >= Math.ceil(wishWords.length * 0.5);
     });
 
     // 3. NƏTİCƏNİ EKRANA ÇIXARIRIQ
@@ -1340,11 +1385,11 @@ function checkInventoryMatch(wishName) {
         let message = `🚀 MÜJDƏ! ANBARDA UYĞUNLUQ TAPILDI!\n\n`;
         message += `Siz yazdınız: "${wishName}"\n`;
         message += `==================================\n`;
-        
+
         matches.forEach((m, index) => {
             // Əgər başlıqda Dostoyevski sözü yoxdursa, amma açıqlamada varsa, bunu vurğulayaq
             const isInTitle = normalize(m.mehsulTitle).includes(normalize(wishName).split(" ")[0]);
-            
+
             message += `${index + 1}. ${m.mehsulTitle}\n`;
             message += `💰 Qiymət: ${m.mehsulQiymeti} ₼\n`;
             message += `📍 Kateqoriya: ${m.mehsulunKateqoriyasi}\n`;
@@ -1376,7 +1421,7 @@ function checkWishlistForNewProduct(newProductTitle) {
             .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o')
             .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ç/g, 'c')
             .replace(/ş/g, 's')
-            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ") 
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ")
             .trim();
     };
 
@@ -1386,7 +1431,7 @@ function checkWishlistForNewProduct(newProductTitle) {
         ${newP.mehsulunKateqoriyasi || ""} 
         ${newP.mehsulAciqlamasi || ""}
     `);
-    
+
     const productPrice = Number(newP.mehsulQiymeti) || 0;
 
     // 3. Yalnız "pending" (Gözləyən) statusunda olan müştəriləri DƏRİN yoxlayırıq
@@ -1427,7 +1472,7 @@ function checkWishlistForNewProduct(newProductTitle) {
 
         setTimeout(() => {
             alert(alertMsg);
-        }, 800); 
+        }, 800);
     }
 }
 
@@ -1459,7 +1504,7 @@ function renderWishPagination(totalItems, filteredData) {
         btn.innerText = i;
         btn.className = i === currentWishPage ? "btn-page active" : "btn-page";
         // Aktiv düymə stili
-        if(i === currentWishPage) {
+        if (i === currentWishPage) {
             btn.style.background = "#3498db";
             btn.style.color = "white";
         }
