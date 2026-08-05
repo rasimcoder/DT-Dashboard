@@ -1,3 +1,70 @@
+/* --- THEME VARIABLES --- */
+:root {
+    --bg-color: #f4f7f6;
+    --sidebar-bg: #ffffff;
+    --card-bg: #ffffff;
+    --text-main: #2c3e50;
+    --text-light: #7f8c8d;
+    --border-color: #eeeeee;
+    --header-bg: #ffffff;
+    --input-bg: #ffffff;
+    --hover-color: #f8f9fa;
+}
+
+/* DARK MODE COLORS */
+body.dark-mode {
+    --bg-color: #121212;
+    --sidebar-bg: #1e1e1e;
+    --card-bg: #1e1e1e;
+    --text-main: #e0e0e0;
+    --text-light: #a0a0a0;
+    --border-color: #333333;
+    --header-bg: #181818;
+    --input-bg: #2d2d2d;
+    --hover-color: #252525;
+}
+
+/* BÜTÜN ELEMENTLƏRƏ TƏTBİQ ET */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    transition: background 0.3s, color 0.3s;
+}
+
+.sidebar { background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); }
+.main-content header { background-color: var(--header-bg); border-bottom: 1px solid var(--border-color); }
+.card, .stat-card, .recent-sales, .detail-view, .modal-content { 
+    background-color: var(--card-bg) !important; 
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+table th { background-color: var(--hover-color); color: var(--text-light); }
+table td { border-bottom: 1px solid var(--border-color); color: var(--text-main); }
+input, select, textarea { 
+    background-color: var(--input-bg) !important; 
+    color: var(--text-main) !important; 
+    border: 1px solid var(--border-color) !important; 
+}
+
+/* Tema Düyməsinin Stili */
+.theme-switch {
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 10px;
+    border-radius: 50%;
+    transition: 0.3s;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.theme-switch:hover { background-color: var(--hover-color); }
+
+
+
+
 :root {
     --bg-color: #f0f2f5;
     --sidebar-color: #1a252f;
@@ -620,4 +687,88 @@ input, textarea, select {
 .btn-page:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Biznes Grid Sistemi */
+.business-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+/* Kartların daxili stili (Əgər mövcud .card kifayət etməsə) */
+.business-grid .card {
+    position: relative;
+    transition: transform 0.3s;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.business-grid .card:hover {
+    transform: translateY(-5px);
+}
+
+.social-row select, .social-row input {
+    font-size: 13px;
+}
+
+/* --- DARK MODE ÜÇÜN XÜSUSİ DÜZƏLİŞLƏR --- */
+
+body.dark-mode .card-body h3, 
+body.dark-mode .biz-card h3,
+body.dark-mode .detail-content h1 {
+    color: var(--text-main) !important; /* Başlıqları ağardır */
+}
+
+/* Biznes səhifəsindəki ikonlar və kateqoriya yazısı */
+body.dark-mode .social-icons-list a,
+body.dark-mode .social-icons-list i {
+    color: var(--text-main) !important; /* Sosial ikonları ağardır */
+}
+
+body.dark-mode .biz-card div[style*="color:#999"], 
+body.dark-mode .biz-card div[style*="color:#aaa"] {
+    color: var(--text-light) !important; /* Balaca kateqoriya yazılarını boz edir */
+}
+
+/* Kartların içindəki qiymətlər və digər tünd elementlər */
+body.dark-mode .price-tag, 
+body.dark-mode .stat-info h3 {
+    color: #2ecc71; /* Qiymətlər yaşıl qalsın, amma tünd fonda parlasın */
+}
+
+/* Detal baxışındakı mətnlər */
+body.dark-mode .detail-meta p, 
+body.dark-mode .detail-description p {
+    color: var(--text-main);
+}
+
+/* Modal başlıqları */
+body.dark-mode .modal-content h2, 
+body.dark-mode .modal-content h3 {
+    color: var(--text-main) !important;
+}
+
+/* Sidebar-dakı loqo və aktiv menyu mətni */
+body.dark-mode .sidebar .logo h2 {
+    color: #ffffff;
+}
+
+/* --- BİZNES İKONLARI ÜÇÜN DARK MODE AYARI --- */
+body.dark-mode .biz-card .social-icons-list a,
+body.dark-mode .biz-card .social-icons-list i {
+    color: #bdc3c7 !important; /* Premium açıq boz (Silver) */
+    transition: color 0.2s ease;
+}
+
+/* Üstünə gələndə tam parlasın (Opsional) */
+body.dark-mode .biz-card .social-icons-list a:hover i {
+    color: #ffffff !important; 
+}
+
+/* Biznes adının Dark Mode-da rəngini bir az daha canlandıraq */
+body.dark-mode .biz-card h3 {
+    color: #ecf0f1 !important;
 }

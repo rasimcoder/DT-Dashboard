@@ -24,6 +24,9 @@ let currentSalesPage = 1;
 const salesRowsPerPage = 10;
 // -------------------------
 
+// --- BİZNES ÜÇÜN QLOBAL DƏYİŞƏN ---
+let businesses = [];
+
 // DOM Elementləri
 
 const connectBtn = document.getElementById('connectBtn');
@@ -74,6 +77,14 @@ async function loadData() {
         wishlist = wishContent ? JSON.parse(wishContent) : [];
         renderWishlist();
     } catch (e) { wishlist = []; }
+
+     // --- BİZNES BAZASINI YÜKLƏ ---
+    try {
+        const bizHandle = await directoryHandle.getFileHandle('biznes_baza.json', { create: true });
+        const bizFile = await bizHandle.getFile();
+        const bizContent = await bizFile.text();
+        businesses = bizContent ? JSON.parse(bizContent) : [];
+    } catch (e) { businesses = []; }
 }
 
 async function saveData() {
@@ -90,6 +101,12 @@ async function saveData() {
         const wishWritable = await wishHandle.createWritable();
         await wishWritable.write(JSON.stringify(wishlist, null, 2));
         await wishWritable.close();
+        
+        // --- BİZNES BAZASINI YADDA SAXLA ---
+        const bizHandle = await directoryHandle.getFileHandle('biznes_baza.json', { create: true });
+        const bizWritable = await bizHandle.createWritable();
+        await bizWritable.write(JSON.stringify(businesses, null, 2));
+        await bizWritable.close();
 
         console.log("Bütün məlumatlar E: diskinə yazıldı.");
     } catch (err) { console.error("Yadda saxlama xətası:", err); }
@@ -234,33 +251,47 @@ async function deleteWish(id) {
 // 3. SƏHİFƏ İDARƏETMƏSİ (MODUL KEÇİDLƏRİ)
 // ==========================================
 function showSection(sectionId) {
+    console.log("Keçid edilən bölmə:", sectionId);
     currentActiveSection = sectionId;
 
-    document.getElementById('productGrid').style.display = 'none';
-    document.getElementById('analyticsSection').style.display = 'none';
-    document.getElementById('wishlistSection').style.display = 'none';
-    if (document.getElementById('productDetailView')) document.getElementById('productDetailView').style.display = 'none';
+    // 1. Bütün bölmələri siyahı şəklində gizlədirik (businessSection bura əlavə olundu)
+    const sections = ['productGrid', 'analyticsSection', 'wishlistSection', 'businessSection', 'productDetailView'];
+    sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
 
-    document.getElementById('searchInput').value = '';
+    // 2. Axtarış qutusunu təmizləyirik
+    const sInput = document.getElementById('searchInput');
+    if (sInput) sInput.value = '';
 
+    // 3. Seçilən bölməyə uyğun məntiqi işə salırıq
     if (sectionId === 'home') {
         document.getElementById('productGrid').style.display = 'grid';
         renderProducts(products.filter(p => p.status !== 'sold'));
     }
     else if (sectionId === 'wishlist') {
-        currentWishPage = 1; // Səhifəyə girişi 1-dən başla
+        currentWishPage = 1; // Səhifələməni sıfırla
         document.getElementById('wishlistSection').style.display = 'block';
         renderWishlist(wishlist);
     }
-    // showSection funksiyasında analytics hissəsini belə yenilə:
     else if (sectionId === 'analytics') {
-        currentSalesPage = 1; // Səhifəni sıfırla
+        currentSalesPage = 1; // Səhifələməni sıfırla
         document.getElementById('analyticsSection').style.display = 'block';
         populateYearFilter();
         updateAnalytics();
     }
+    // --- YENİ BİZNES BÖLMƏSİNİN İNTEQRASİYASI ---
+    else if (sectionId === 'business') {
+        const bizSection = document.getElementById('businessSection');
+        if (bizSection) {
+            bizSection.style.display = 'block';
+            renderBusinesses(); // Biznes kartlarını ekrana çıxarır
+        }
+    }
 
-
+    // Sidebar-da aktivlik vizualını yeniləyirik (isteğe bağlı)
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 }
 
 // Axtarış funksiyasını hər iki bölməyə uyğunlaşdırırıq handleSearch
@@ -1564,4 +1595,192 @@ function renderSalesPagination(totalItems) {
     paginationContainer.appendChild(nextBtn);
 
     tableContainer.appendChild(paginationContainer);
+}
+
+
+// --- BİZNES ÜÇÜN QLOBAL FUNKSİYALAR ---
+
+function openBusinessModal() {
+    document.getElementById('businessModal').style.display = 'block';
+    document.getElementById('businessForm').reset();
+    document.getElementById('editIndex').value = '';
+    document.getElementById('socialLinksContainer').innerHTML = '';
+    document.getElementById('customCategory').style.display = 'none';
+    document.getElementById('modalTitle').innerText = "Biznes Məlumatı";
+}
+
+function closeBusinessModal() {
+    document.getElementById('businessModal').style.display = 'none';
+}
+
+// Kateqoriya "Əllə Yaz" seçiləndə inputu göstər
+function toggleCustomCategory(val) {
+    document.getElementById('customCategory').style.display = (val === 'custom') ? 'block' : 'none';
+}
+
+function addSocialRow(platform = 'instagram', link = '') {
+    const container = document.getElementById('socialLinksContainer');
+    const div = document.createElement('div');
+    div.className = 'social-row';
+    div.style.display = 'flex';
+    div.style.gap = '5px';
+    div.style.marginBottom = '8px';
+    
+    div.innerHTML = `
+        <select class="social-platform" style="flex:1; padding:8px; border-radius:5px; border:1px solid #ddd;">
+            <option value="instagram" ${platform==='instagram'?'selected':''}>Instagram</option>
+            <option value="facebook" ${platform==='facebook'?'selected':''}>Facebook</option>
+            <option value="tiktok" ${platform==='tiktok'?'selected':''}>TikTok</option>
+            <option value="youtube" ${platform==='youtube'?'selected':''}>Youtube</option>
+            <option value="globe" ${platform==='globe'?'selected':''}>Vebsayt</option>
+        </select>
+        <input type="text" class="social-link" placeholder="Link" value="${link}" style="flex:2; padding:8px; border-radius:5px; border:1px solid #ddd; margin:0;">
+        <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold; padding:0 5px;">×</button>
+    `;
+    container.appendChild(div);
+}
+
+document.getElementById('businessForm').onsubmit = async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('bizName').value;
+    let category = document.getElementById('bizCategory').value;
+    if(category === 'custom') category = document.getElementById('customCategory').value;
+    
+    const editIndex = document.getElementById('editIndex').value;
+    const fileInput = document.getElementById('bizLogo');
+
+    const socials = [];
+    document.querySelectorAll('.social-row').forEach(row => {
+        const link = row.querySelector('.social-link').value;
+        if(link) {
+            socials.push({
+                platform: row.querySelector('.social-platform').value,
+                link: link
+            });
+        }
+    });
+
+    const saveBizAction = async (logoData) => {
+        const bizObj = {
+            name,
+            category,
+            socials,
+            logo: logoData || (editIndex !== "" ? businesses[editIndex].logo : 'https://via.placeholder.com/80?text=LOGO')
+        };
+
+        if (editIndex === "") {
+            businesses.push(bizObj);
+        } else {
+            businesses[editIndex] = bizObj;
+        }
+
+        await saveData(); // E: diskindəki biznes_baza.json-a yazır
+        renderBusinesses();
+        closeBusinessModal();
+    };
+
+    if (fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (ev) => saveBizAction(ev.target.result);
+        reader.readAsDataURL(fileInput.files[0]);
+    } else {
+        saveBizAction(null);
+    }
+};
+
+function renderBusinesses() {
+    const grid = document.getElementById('businessGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    businesses.forEach((biz, index) => {
+        const card = document.createElement('div');
+        card.className = 'card biz-card'; // Sənin Dashboard stilinə uyğun
+        
+        let socialIcons = biz.socials.map(s => {
+            let iconClass = s.platform === 'globe' ? 'fas fa-globe' : `fab fa-${s.platform}`;
+            return `<a href="${s.link}" target="_blank" style="margin:0 8px; font-size:20px; color:#555;"><i class="${iconClass}"></i></a>`;
+        }).join('');
+
+        card.innerHTML = `
+            <div style="position:absolute; top:10px; right:10px; display:flex; gap:12px; font-size: 16px;">
+                <i class="fas fa-edit" onclick="editBiz(${index})" style="color:#3498db; cursor:pointer;" title="Redaktə"></i>
+                <i class="fas fa-trash" onclick="deleteBiz(${index})" style="color:#e74c3c; cursor:pointer;" title="Sil"></i>
+            </div>
+            <img src="${biz.logo}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin: 15px auto; display:block; border:3px solid #f8f9fa;">
+            <div style="font-size:11px; color:#999; font-weight:bold; text-transform:uppercase; text-align:center;">${biz.category}</div>
+            <h3 style="margin:10px 0; text-align:center; color:#2c3e50;">${biz.name}</h3>
+            <div style="margin-top:15px; padding-top:10px; border-top:1px solid #eee; text-align:center;">
+                ${socialIcons || '<span style="color:#ddd; font-size:12px;">Link yoxdur</span>'}
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function editBiz(index) {
+    const biz = businesses[index];
+    openBusinessModal();
+    document.getElementById('modalTitle').innerText = "Biznesi Redaktə Et";
+    document.getElementById('editIndex').value = index;
+    document.getElementById('bizName').value = biz.name;
+    document.getElementById('bizCategory').value = biz.category;
+    
+    // Əgər kateqoriya standart siyahıda yoxdursa, custom-ı aktiv et
+    const select = document.getElementById('bizCategory');
+    const isStandard = Array.from(select.options).some(opt => opt.value === biz.category);
+    if (!isStandard) {
+        select.value = 'custom';
+        document.getElementById('customCategory').style.display = 'block';
+        document.getElementById('customCategory').value = biz.category;
+    } else {
+        select.value = biz.category;
+    }
+
+    document.getElementById('socialLinksContainer').innerHTML = '';
+    biz.socials.forEach(s => addSocialRow(s.platform, s.link));
+}
+
+async function deleteBiz(index) {
+    if(confirm('Bu biznes səhifəsini bazadan tamamilə silmək istəyirsiniz?')) {
+        businesses.splice(index, 1);
+        await saveData();
+        renderBusinesses();
+    }
+}
+
+
+// ==========================================
+// DARK / LIGHT MODE MƏNTİQİ
+// ==========================================
+
+// Səhifə yüklənəndə yaddaşdakı temanı yoxla
+window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('dashboard-theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        updateThemeIcon(true);
+    }
+});
+
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    
+    // Seçimi yaddaşda saxla
+    localStorage.setItem('dashboard-theme', isDark ? 'dark' : 'light');
+    
+    // İkonu dəyiş
+    updateThemeIcon(isDark);
+}
+
+function updateThemeIcon(isDark) {
+    const icon = document.querySelector('#themeToggle i');
+    if (isDark) {
+        icon.className = 'fas fa-sun'; // Qaranlıqdadırsa günəş göstər
+        icon.style.color = '#f1c40f';
+    } else {
+        icon.className = 'fas fa-moon'; // İşıqlıdırsa ay göstər
+        icon.style.color = '#2c3e50';
+    }
 }
