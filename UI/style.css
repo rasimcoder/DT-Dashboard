@@ -772,3 +772,93 @@ body.dark-mode .biz-card .social-icons-list a:hover i {
 body.dark-mode .biz-card h3 {
     color: #ecf0f1 !important;
 }
+
+
+
+/* --- GROWTH GRAPH PREMIUM RE-DESIGN --- */
+.growth-analytics-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 30px;
+    margin: 25px 0;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+}
+
+.growth-chart-viewport {
+    height: 300px; /* Bir az daha hündür etdik */
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 30px;
+    padding: 0 10px;
+}
+
+/* Ox işarəsini professional və qalın etdik */
+.growth-arrow-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.growth-bars-flex {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    z-index: 5; /* Kubiklər oxun üstündə olsun */
+    position: relative;
+}
+
+.growth-bar-unit {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+}
+
+/* Kubiklərin (Sütunların) stili */
+.growth-bar-pillar {
+    width: 45px;
+    background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+    border-radius: 6px 6px 2px 2px;
+    position: relative;
+    transition: height 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+}
+
+/* Qiymət yazısı kubikin tam üstündə */
+.growth-bar-value {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+.growth-labels-row {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.growth-label-text {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-light);
+}
+
+/* Dark Mode üçün rəng parlaqlığı */
+body.dark-mode .growth-bar-pillar {
+    background: linear-gradient(180deg, #2ecc71 0%, #1e8449 100%);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}

@@ -499,7 +499,13 @@ async function updateAnalytics() {
         });
         renderSalesPagination(totalItems); 
     }
-
+// updateAnalytics funksiyasının sonuna, initCharts-dan əvvəl bunu qoy:
+try {
+    drawGrowthVisuals(selectedYear, selectedMonth);
+} catch (e) {
+    console.error("Growth Graph Error:", e);
+}
+// Bu try-catch bloku imkan verməyəcək ki, hər hansı səhv digər qrafikləri silsin.
     initCharts(filteredSold, expenseGroups);
 }
 
@@ -1783,4 +1789,95 @@ function updateThemeIcon(isDark) {
         icon.className = 'fas fa-moon'; // İşıqlıdırsa ay göstər
         icon.style.color = '#2c3e50';
     }
+}
+
+
+// 1. DƏQİQ MƏNFƏƏT HESABLAYICI (Xətasız Versiya)
+function getProfitForPeriod(y, m, d = null) {
+    try {
+        return products.filter(p => {
+            if (p.status !== 'sold' || !p.satildigiTarix) return false;
+            const date = new Date(p.satildigiTarix);
+            const matchYear = date.getFullYear() === parseInt(y);
+            const matchMonth = m === 'all' ? true : date.getMonth() === parseInt(m);
+            const matchDay = d === null ? true : date.getDate() === parseInt(d);
+            return matchYear && matchMonth && matchDay;
+        }).reduce((sum, p) => {
+            const sale = Number(p.mehsulQiymeti) || 0;
+            const cost = Number(p.alisQiymeti) || 0;
+            const comm = Number(p.komissiyaQazanci) || 0;
+            const exps = (p.mehsulXercleri || []).reduce((s, e) => s + (Number(e.amount) || 0), 0);
+            return sum + (p.biznesModeli === 'commission' ? comm : (sale - (cost + exps)));
+        }, 0);
+    } catch (err) {
+        return 0;
+    }
+}
+
+// 2. ƏSAS QRAFİK RENDERİ
+function drawGrowthVisuals(year, month) {
+    const barsContainer = document.getElementById('growthBarsWrapper');
+    const labelsContainer = document.getElementById('growthXLabels');
+    const statusPill = document.getElementById('growthStatus');
+    if (!barsContainer || !labelsContainer) return;
+
+    barsContainer.innerHTML = '';
+    labelsContainer.innerHTML = '';
+
+    // Azərbaycan dilində aylar
+    const monthNamesAZ = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr"];
+
+    let dataPoints = [];
+    
+    if (year === 'all') {
+        const years = [...new Set(products.map(p => p.satildigiTarix ? new Date(p.satildigiTarix).getFullYear() : new Date().getFullYear()))].sort();
+        dataPoints = years.map(y => ({ label: y, y: y, m: 'all' }));
+    } else if (month === 'all') {
+        // Ayları M01 yox, tam adla düzürük
+        for(let i=0; i<12; i++) dataPoints.push({ label: monthNamesAZ[i], y: year, m: i });
+    } else {
+        const days = [...new Set(products.filter(p => p.status === 'sold').map(p => new Date(p.satildigiTarix).getDate()))].sort((a,b)=>a-b);
+        dataPoints = days.map(d => ({ label: d, y: year, m: month, d: d }));
+    }
+
+    const profits = dataPoints.map(dp => getProfitForPeriod(dp.y, dp.m, dp.d || null));
+    const maxProfit = Math.max(...profits, 10); // Minimum 10 manatlıq hündürlük bazası
+
+    profits.forEach((val, i) => {
+        // Hündürlük hesabı (Əgər qazanc varsa kubik görünsün)
+        const heightPercent = (val / maxProfit) * 100;
+        
+        const barUnit = document.createElement('div');
+        barUnit.className = 'growth-bar-unit';
+        
+        // Faiz artımı (Yalnız mənfəət olan aylar arasında)
+        let pctHtml = "";
+        if (i > 0 && profits[i-1] > 0 && val > profits[i-1]) {
+            const grow = ((val - profits[i-1]) / profits[i-1]) * 100;
+            pctHtml = `<div class="growth-pct-tag" style="position:absolute; top:-35px; background:#2ecc71; color:white; padding:2px 6px; border-radius:4px; font-size:9px;">+${grow.toFixed(0)}%</div>`;
+        }
+
+        barUnit.innerHTML = `
+            ${val > 0 ? `<span class="growth-bar-value">${val}₼</span>` : ''}
+            <div class="growth-bar-pillar" style="height:${val > 0 ? Math.max(heightPercent, 8) : 0}%">
+                ${pctHtml}
+            </div>
+        `;
+        barsContainer.appendChild(barUnit);
+
+        const lbl = document.createElement('span');
+        lbl.className = 'growth-label-text';
+        lbl.innerText = dataPoints[i].label;
+        labelsContainer.appendChild(lbl);
+    });
+
+    // Oxun rəngini və qalınlığını dinamik tənzimləyən kiçik toxunuş
+    const arrowPath = document.getElementById('dynamicArrowPath');
+    if (arrowPath) {
+        arrowPath.setAttribute('stroke-width', '8');
+        arrowPath.setAttribute('stroke', profits[profits.length-1] >= profits[0] ? 'rgba(46, 204, 113, 0.4)' : 'rgba(231, 76, 60, 0.4)');
+    }
+
+    const totalCurrent = profits.reduce((a,b)=>a+b, 0);
+    statusPill.innerHTML = totalCurrent > 0 ? `Trend: Aktiv Yüksəliş <i class="fas fa-rocket"></i>` : `Trend: Gözləmədə`;
 }
