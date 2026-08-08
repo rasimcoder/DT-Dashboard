@@ -1308,7 +1308,7 @@ function addExpenseRow(title = "", amount = "") {
     row.className = 'expense-row';
     row.innerHTML = `
         <input type="text" class="exp-title" placeholder="Xərcin adı" value="${title}">
-        <input type="number" class="exp-value" placeholder="₼" value="${amount}">
+        <input type="number" class="exp-value" placeholder="₼" step="0.01" value="${amount}">
         <button type="button" class="btn-remove-expense" onclick="this.parentElement.remove()">×</button>
     `;
     container.appendChild(row);
